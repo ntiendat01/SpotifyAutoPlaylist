@@ -1,51 +1,54 @@
 # Spotify AutoPlaylist · replay.
 
 Personal Android companion that will collect repeat-play tracks into a real private Spotify playlist.
-Requirements: [docs/README.md](docs/README.md). Current runtime scope: **TASK-004 manual API smoke test**;
-TASK-010 audits and reuses this Android/Compose scaffold. See [the scaffold report](docs/M1-ANDROID-SCAFFOLD.md).
+Requirements: [docs/README.md](docs/README.md). Current runtime checkpoint: **TASK-050A/050B**
+(early UI foundation and production onboarding before M3/M4). See [the checkpoint report](docs/M5-UI-FOUNDATION-ONBOARDING.md).
 
-This test harness opens browser authorization, receives a loopback callback, validates PKCE/state,
-and exchanges the one-time code. It validates response shape/scopes, calls `GET /v1/me`, compares
-the returned `id` to a separately entered expected developer-owner user ID, then keeps the verified token
-in memory for manual API checks. TASK-004 also requires immutable `/me.account_id` to isolate recovery state.
-No tokens, codes or raw HTTP bodies are logged, displayed or persisted. No client secret is used.
-It can read one Recent page, create/link a real owned private playlist, and append one explicitly chosen
-test track after confirmation. Every write is reconciled; Added requires a remote readback.
-Persistent sign-in, full history sync, counting rules and workers are not implemented yet.
-Matching `/me.id` does **not** prove Premium or Developer App ownership.
+The native Compose launcher includes Welcome, a clearly labeled account-free UI preview with four tabs,
+production PKCE login/session restore, account verification and private-playlist setup. Playlist create/link
+requires confirmation and GET verification of ownership/privacy. A durable creation journal prevents blind
+POST retries after process death or uncertain results. Local auth uses Android Keystore encryption (M2).
+No client secret, token, authorization code or raw HTTP body is displayed or logged.
+
+History ingestion, qualification, remote membership reconciliation, track additions and background sync
+are still M3/M4/TASK-051. The tab shell honestly shows unavailable/empty states, not sample tracks/counts.
+Matching `/me.id` does **not** prove Premium or Developer App ownership. No live Spotify integration or
+physical-device acceptance is implied by a successful build/test.
 
 ## Try on OnePlus
 
-1. In the **new Premium account's** Spotify Developer App, register exactly
-   `http://127.0.0.1:8765/callback`. Ensure the same account is allowed to use the app as required.
-2. Build the APK below, or download `replay-auth-spike-debug-apk` from a successful GitHub Actions run.
-3. Install `app-debug.apk`, open **replay. · Auth thử nghiệm**, and enter the app's public **Client ID**.
-   Never enter Client Secret. Client ID is runtime-only in this spike, not saved or built into the APK.
-4. Enter the **Spotify user ID of the Developer App owner**, independently obtained from that account's
-   profile link (`/user/<id>`, excluding query parameters) or username on the account page. This is not
-   display name, email, Client ID, full profile URL or `account_id`. The field is masked and memory-only.
-5. Tap **Kết nối Spotify**, complete login/consent in the browser, then manually return to replay.
-   Only OAuth 200 **and** `/me` 200 **and** exact expected-ID match produce success. Wrong account is rejected.
-6. Read Recently Played, then confirm creating/finding a private playlist or explicitly link one you own.
-   Paste a **track** link from Spotify and confirm adding one test track. Use **Đối soát lại Spotify**
-   after uncertain results or a reconnect. Never assume a POST 201 alone means the track is present.
-7. Record only safe outcome/status using [the API checklist](docs/M0-API-SPIKE.md).
-   Never copy callback URLs or capture the browser address bar: it can contain an authorization code.
-8. Test repeat/reconnect (no duplicate), cancel during writes, and external track removal (no re-add).
-   Original auth/account checklists still apply.
+1. Build the APK below, or download `replay-auth-spike-debug-apk` from a successful CI run for the UI branch.
+2. Install `app-debug.apk` and open **replay.**. Choose **Xem thử giao diện** to inspect the four-tab shell
+   without signing in. A persistent preview banner distinguishes it from a connected account.
+3. For real login, create the ignored repository-root `spotify.local.properties` **before building**:
 
-Callback waits at most three minutes. Closing the browser cannot be detected automatically;
-return and tap **Hủy đăng nhập**, or wait for timeout. Process death loses the attempt: start a new login.
-Application ID is `io.github.ntiendat01.replay` (debug builds: `io.github.ntiendat01.replay.debug`).
-The older probe `com.spotifyautoplaylist.spike` is a separate app and keeps its own journal.
-Tokens and listening events are not saved.
-Version: `0.4.0` (versionCode 400). App-private no-backup journal retains only marker,
-playlist ID, one selected test-track ID and recovery state, keyed by hashed account ID + Client ID.
-Do not delete that journal to retry a write. Corruption/storage failure stops the session.
-A different debug signing key may require removing the previous probe before installing. Uninstall
-loses local recovery state; real playlists remain. Link the existing smoke playlist after reinstall.
-End/cancel/expiry/process death loses the memory-only token and requires a fresh login.
-Screen capture/recent-task snapshots are blocked in this spike; product visual QA is a later task.
+   ```properties
+   spotify.clientId=<public Client ID of the new Premium account's Developer App>
+   spotify.ownerUserId=<Spotify user ID of that same Developer App owner>
+   ```
+
+   Never enter a client secret. Owner ID is the `/user/<id>` profile value, not email/display name.
+   Configured APKs contain that personal owner identifier; keep them private. CI builds without this file
+   intentionally disable login but retain the UI preview. Do not commit this file.
+4. Register exactly `http://127.0.0.1:8765/callback` in the same Spotify Developer App. Tap **Kết nối Spotify**,
+   complete browser login/consent and return to replay. Account mismatch/insufficient scope blocks setup.
+5. After verified login, confirm creating a private playlist or paste a link to one you own. If a request
+   has an uncertain outcome, use **Xác minh lại playlist**; app will not blindly create another. If Spotify
+   reports public/unknown privacy, make the playlist private in Spotify and verify/link it again.
+6. Setup completion enters the tab shell. **Mở trong Spotify** opens the actual playlist. This checkpoint
+   does not add tracks or sync history. Settings can disconnect while keeping local data for the same account.
+7. Restart to check persisted sign-in and playlist mapping. Closing the browser cannot be detected
+   automatically: return and choose **Hủy đăng nhập**, or wait for the three-minute timeout. Process death
+   during OAuth loses the verifier and requires a fresh login.
+
+Version **0.5.0 / 500**. Application ID: `io.github.ntiendat01.replay` (debug: `.debug`).
+Account/session/setup surfaces block screen capture; public Welcome and the account-free preview permit
+visual QA. Never capture browser callback URLs. An incompatible debug signature can prevent in-place
+installation; do not uninstall without understanding that local credentials/history/recovery state are lost.
+Real Spotify playlists survive uninstall; explicitly link the existing playlist after reinstall.
+
+The earlier M0 probe implementation/tests remain as historical integration evidence; its old launcher
+was replaced. See [M0-API-SPIKE.md](docs/M0-API-SPIKE.md) for its signoff and limitations.
 
 ## Pinned toolchain
 
@@ -58,6 +61,7 @@ Screen capture/recent-task snapshots are blocked in this spike; product visual Q
 | Compose BOM | 2025.12.00 |
 | Activity Compose | 1.12.2 |
 | Lifecycle | 2.9.4 |
+| Navigation Compose | 2.9.8 |
 | Coroutines | 1.10.2 |
 | OkHttp | 4.12.0 |
 | Kotlin serialization JSON | 1.9.0 |
@@ -93,7 +97,7 @@ Install JDK 17 and Android SDK command-line tools, accept SDK licenses, then ins
 The first `:data` test run downloads Robolectric's Android runtime jar.
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`.
-Production auth (TASK-020, not yet used by the probe screen) reads build config from the ignored
+Production onboarding (TASK-050B) reads build config from the ignored
 `spotify.local.properties` at the repository root: `spotify.clientId=<32-hex Client ID>` and
 `spotify.ownerUserId=<owner /user/<id>>`. Without it the build still succeeds with auth unconfigured.
 Never put a client secret there. See [the auth report](docs/M2-AUTH.md).
@@ -136,7 +140,7 @@ TASK-011 workflow/artifact evidence: [M1-ANDROID-CI.md](docs/M1-ANDROID-CI.md).
   MockWebServer tests.
 - `data/`: Room v1 schema (exported to `data/schemas/`, must be committed), DAOs, account-scoped DataStore
   settings and local-data reset; Robolectric tests with in-memory Room.
-- `app/`: native Compose diagnostic screen, lifecycle-aware browser launch and ViewModel.
+- `app/`: native Replay design system, four-tab preview, production onboarding ViewModel, lifecycle-aware browser launch and private-playlist setup. Compose UI tests use Robolectric with synthetic states only.
 - `.github/workflows/android-ci.yml`: JVM/Android unit tests, lint and debug APK.
 
 Working name `replay.` is independent of Spotify. No open-source license is granted yet;
