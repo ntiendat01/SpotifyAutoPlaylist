@@ -26,6 +26,9 @@ android {
         // Keep reviewed/pinned toolchain versions. Update notices are informational,
         // not functional defects; security, API and resource checks remain strict.
         informational += setOf("GradleDependency", "AndroidGradlePluginVersion", "NewerVersionAvailable")
+        // M0 is a sideload-only API 36 / OxygenOS 16 probe. This date-sensitive
+        // upgrade reminder stays visible; retargeting requires M1/device validation.
+        informational += "OldTargetApi"
     }
 }
 

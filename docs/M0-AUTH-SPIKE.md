@@ -83,6 +83,11 @@ If loopback fails on OxygenOS, stop broad implementation and evaluate a verified
   which reported `Failed to find package 'tools'`. The workflow now explicitly installs `platform-tools`
   in that action; pinned API 36 / build-tools 35.0.0 remain in the next step. Action SHA and command-line
   tools version are unchanged. Follow-up CI evidence is tracked in GitHub Actions for the fix commit.
+- [Follow-up run 41836793545](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41836793545)
+  passed SDK setup and reached Gradle, then failed only on `OldTargetApi`: the pinned API 36 target
+  upgrade reminder was promoted by `warningsAsErrors`. For this sideload-only OxygenOS 16 M0 probe,
+  that reminder is informational (still reported); compile/target SDK stay at 36. Other lint checks
+  remain strict. Revisit the target/toolchain in M1 and validate behavior on device before retargeting.
 - `GATE-AUTH-01`, `GATE-ACCOUNT-01`, `GATE-API-01`: **pending**.
 
 ## Official references checked during implementation
