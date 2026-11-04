@@ -1,7 +1,36 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+// MAJOR.MINOR.PATCH -> MAJOR * 10000 + MINOR * 100 + PATCH; MINOR/PATCH stay below 100
+// so versionCode is strictly increasing for every release.
+val appVersionName = providers.gradleProperty("replay.versionName").get()
+val appVersionCode = run {
+    val match = requireNotNull(Regex("""(\d+)\.(\d+)\.(\d+)""").matchEntire(appVersionName)) {
+        "replay.versionName must be MAJOR.MINOR.PATCH, was '$appVersionName'"
+    }
+    val (major, minor, patch) = match.destructured.toList().map(String::toInt)
+    require(minor < 100 && patch < 100) { "MINOR and PATCH must be below 100" }
+    major * 10_000 + minor * 100 + patch
+}
+
+// Release key material never lives in the repository. CI supplies REPLAY_SIGNING_* environment
+// variables; local builds read a properties file outside the repo (default ~/.replay-signing/).
+val releaseSigning: Map<String, String>? = run {
+    val keys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+    val fromEnv = keys.associateWith { System.getenv("REPLAY_SIGNING_" + it.uppercase()) }
+    if (fromEnv.values.all { !it.isNullOrBlank() }) return@run fromEnv.mapValues { it.value!! }
+    val file = providers.gradleProperty("replay.signingProperties").orNull?.let(::file)
+        ?: File(System.getProperty("user.home"), ".replay-signing/signing.properties")
+    if (!file.isFile) return@run null
+    val props = Properties().apply { file.inputStream().use(::load) }
+    val missing = keys.filter { props.getProperty(it).isNullOrBlank() }
+    require(missing.isEmpty()) { "Signing properties file is missing $missing" }
+    keys.associateWith { props.getProperty(it) }
 }
 
 android {
@@ -10,11 +39,37 @@ android {
     buildToolsVersion = libs.versions.android.build.tools.get()
 
     defaultConfig {
-        applicationId = "com.spotifyautoplaylist.spike"
+        applicationId = "io.github.ntiendat01.replay"
         minSdk = libs.versions.android.min.sdk.get().toInt()
         targetSdk = libs.versions.android.target.sdk.get().toInt()
-        versionCode = 3
-        versionName = "0.3.0-api-spike"
+        versionCode = appVersionCode
+        versionName = appVersionName
+    }
+
+    signingConfigs {
+        if (releaseSigning != null) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("storeFile"))
+                storePassword = releaseSigning.getValue("storePassword")
+                keyAlias = releaseSigning.getValue("keyAlias")
+                keyPassword = releaseSigning.getValue("keyPassword")
+                enableV1Signing = false
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+        release {
+            // Without key material AGP emits app-release-unsigned.apk, which cannot be installed.
+            signingConfig = signingConfigs.findByName("release")
+            isMinifyEnabled = false
+        }
     }
 
     buildFeatures { compose = true }

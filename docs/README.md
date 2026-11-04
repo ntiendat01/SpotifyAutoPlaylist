@@ -78,6 +78,13 @@ confirmed via UI automator dump, FLAG_SECURE verified. Device: CPH2691, Android 
 (API 36), OxygenOS 16.0.2.400. See [M1-ANDROID-DEVICE.md](M1-ANDROID-DEVICE.md).
 Next planned task: TASK-013, application ID, signing strategy, versionCode/versionName.
 
+**TASK-013: PASS — local build and signature verification on 2026-11-04.**
+Application ID `io.github.ntiendat01.replay` (debug `.debug`), version `0.4.0` / versionCode 400
+derived from `gradle.properties`. Release signed with an owner-held key outside the repository
+(certificate SHA-256 `67:18:88:93…`); CI builds the release variant unsigned. 84 JVM tests and lint
+passed locally. No CI run or device install of the new ID observed yet; M1 exit still needs both.
+See [M1-ANDROID-SIGNING.md](M1-ANDROID-SIGNING.md).
+
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.
 - Document status: `Baseline` (this version), `Verified` (after gates), `Implemented`, `Released`.

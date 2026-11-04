@@ -44,6 +44,11 @@ Version 1.3.0 · Status: Baseline
     debug builds). See [M1-ANDROID-DEVICE.md](M1-ANDROID-DEVICE.md). Manual scroll,
     input and network acceptance deferred to user.
 - TASK-013 Configure application ID, signing strategy, versionCode/versionName.
+  - **PASS — 2026-11-04, local verification.** Release ID `io.github.ntiendat01.replay`, debug
+    `.debug` suffix; version `0.4.0` / code 400 from `gradle.properties` (`MAJOR*10000+MINOR*100+PATCH`).
+    Owner-held RSA 4096 release key outside the repo; release APK signed and verified, unsigned when
+    no key (CI). 84 tests and lint passed; release locks added without version changes. CI rerun and
+    device install of the new ID pending. See [M1-ANDROID-SIGNING.md](M1-ANDROID-SIGNING.md).
   **Exit:** clean CI build, app launches on device without Android Studio.
 
 ### M2 — Auth and persistence

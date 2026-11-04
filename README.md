@@ -36,8 +36,10 @@ Matching `/me.id` does **not** prove Premium or Developer App ownership.
 
 Callback waits at most three minutes. Closing the browser cannot be detected automatically;
 return and tap **Hủy đăng nhập**, or wait for timeout. Process death loses the attempt: start a new login.
-This separate application ID is `com.spotifyautoplaylist.spike`. Tokens and listening events are not saved.
-Version: `0.3.0-api-spike` (versionCode 3). App-private no-backup journal retains only marker,
+Application ID is `io.github.ntiendat01.replay` (debug builds: `io.github.ntiendat01.replay.debug`).
+The older probe `com.spotifyautoplaylist.spike` is a separate app and keeps its own journal.
+Tokens and listening events are not saved.
+Version: `0.4.0` (versionCode 400). App-private no-backup journal retains only marker,
 playlist ID, one selected test-track ID and recovery state, keyed by hashed account ID + Client ID.
 Do not delete that journal to retry a write. Corruption/storage failure stops the session.
 A different debug signing key may require removing the previous probe before installing. Uninstall
@@ -85,6 +87,13 @@ Install JDK 17 and Android SDK command-line tools, accept SDK licenses, then ins
 ```
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`.
+Bump the version only via `replay.versionName` (`MAJOR.MINOR.PATCH`) in `gradle.properties`;
+versionCode is derived as `MAJOR*10000 + MINOR*100 + PATCH`.
+
+Release: `./gradlew --no-daemon :app:assembleRelease` signs with the owner key from
+`~/.replay-signing/signing.properties` (or `REPLAY_SIGNING_*` environment variables) and writes
+`app/build/outputs/apk/release/app-release.apk`; without a key it writes an unsigned, non-installable APK.
+Never commit key material. Details and certificate fingerprint: [signing report](docs/M1-ANDROID-SIGNING.md).
 JVM HTML reports: `auth-core/build/reports/tests/test/index.html` and
 `app/build/reports/tests/testDebugUnitTest/index.html`.
 GitHub Actions runs the same checks and uploads APK/reports without Spotify credentials.
@@ -101,8 +110,8 @@ for 14 days by this workflow.
 
 `auth-spike-test-reports` contains HTML reports plus JUnit/lint XML for inspecting actual test totals.
 The APK's signature is verified before upload. These are disposable debug builds; a new CI runner
-may use a different debug signing key, so in-place device updates are not guaranteed. Stable signing
-is TASK-013/054. Device installation and launch acceptance remain TASK-012.
+may use a different debug signing key, so in-place device updates are not guaranteed. Stable updates
+use the locally signed release build (TASK-013); CI release signing is TASK-054.
 
 TASK-011 workflow/artifact evidence: [M1-ANDROID-CI.md](docs/M1-ANDROID-CI.md).
 
@@ -114,4 +123,5 @@ TASK-011 workflow/artifact evidence: [M1-ANDROID-CI.md](docs/M1-ANDROID-CI.md).
 - `.github/workflows/android-ci.yml`: JVM/Android unit tests, lint and debug APK.
 
 Working name `replay.` is independent of Spotify. No open-source license is granted yet;
-keep this repository private until the owner chooses one. No production signing key exists in this task.
+keep this repository private until the owner chooses one. The release signing key is held by the owner
+outside the repository.
