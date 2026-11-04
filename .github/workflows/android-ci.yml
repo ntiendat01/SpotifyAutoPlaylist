@@ -32,11 +32,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4; includes wrapper validation
       - name: JVM tests, Android tests, lint and APK
         run: ./gradlew --no-daemon :auth-core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      - name: Verify APK signature and record build identity
+        working-directory: app/build/outputs/apk/debug
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app-debug.apk
+          sha256sum app-debug.apk > app-debug.apk.sha256
+          sha256sum --check app-debug.apk.sha256
+          git rev-parse HEAD > source-commit.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: replay-auth-spike-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/app-debug.apk.sha256
+            app/build/outputs/apk/debug/output-metadata.json
+            app/build/outputs/apk/debug/source-commit.txt
           if-no-files-found: error
+          retention-days: 14
       - name: Upload test and lint reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -44,6 +56,10 @@ jobs:
           name: auth-spike-test-reports
           path: |
             auth-core/build/reports/tests/
+            auth-core/build/test-results/test/TEST-*.xml
             app/build/reports/tests/
+            app/build/test-results/testDebugUnitTest/TEST-*.xml
             app/build/reports/lint-results-debug.html
+            app/build/reports/lint-results-debug.xml
           if-no-files-found: ignore
+          retention-days: 14
