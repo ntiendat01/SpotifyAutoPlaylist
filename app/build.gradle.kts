@@ -104,6 +104,10 @@ android {
         // upgrade reminder stays visible; retargeting requires M1/device validation.
         informational += "OldTargetApi"
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all { it.systemProperty("replay.screenshots", providers.gradleProperty("replay.screenshots").orNull.orEmpty()) }
+    }
 }
 
 kotlin { jvmToolchain(17) }
@@ -117,10 +121,15 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(libs.compose.ui.test.manifest)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.navigation.compose)
     implementation(libs.coroutines.android)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }

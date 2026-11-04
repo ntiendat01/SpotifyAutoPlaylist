@@ -94,6 +94,12 @@ Version 1.3.0 · Status: Baseline
 
 ### M5 — UI, worker and release
 
+**Early checkpoint approved (2026-11-05):** implement TASK-050A then TASK-050B before M3/M4 so the
+user can install and inspect the app. This is not all of TASK-050 or M5. It includes the narrow
+FR-002 playlist-setup prerequisite from TASK-040; it does not implement track membership/writes,
+history ingestion, counting or workers. Scope, tests, visual deviations and evidence:
+[M5-UI-FOUNDATION-ONBOARDING.md](M5-UI-FOUNDATION-ONBOARDING.md).
+
 - TASK-050 Implement Compose onboarding, Dashboard, History, Rules, Settings with UI states.
 - TASK-051 WorkManager 30-min periodic best-effort sync and manual sync serialization.
 - TASK-052 Handle network/offline, 401/403/429, account mismatch and playlist deletion.

@@ -18,7 +18,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 
 /**
- * Production auth wiring. Create one instance per process; the M0 probe screen does not use it yet.
+ * Production auth wiring. Owned once per process by ReplayApplication.
  * [resetSteps] will cancel workers (TASK-051) and delete account-scoped Room/DataStore data (TASK-021).
  */
 class AndroidAuth private constructor(val config: AuthConfig, context: Context, resetSteps: List<AccountResetStep>) {

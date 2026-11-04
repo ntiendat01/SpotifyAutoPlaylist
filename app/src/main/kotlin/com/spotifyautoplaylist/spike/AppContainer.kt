@@ -8,10 +8,13 @@ import com.spotifyautoplaylist.data.settings.SettingsRepository
 import com.spotifyautoplaylist.spotify.SpotifyClient
 import com.spotifyautoplaylist.spotify.SpotifyHttpLogger
 import java.io.File
+import com.spotifyautoplaylist.auth.AuthState
+import com.spotifyautoplaylist.onboarding.*
+import java.net.URI
 
 /**
  * Process-wide production graph: one Room database, one settings DataStore and the auth manager whose
- * account reset deletes both. Not used by the M0 probe screen yet (TASK-050B wires it into the UI).
+ * account reset deletes both. Used by the production onboarding UI (TASK-050B).
  */
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
@@ -29,5 +32,32 @@ class AppContainer(context: Context) {
     val spotify: SpotifyClient? by lazy {
         val logger = if (BuildConfig.DEBUG) SpotifyHttpLogger { Log.i("SpotifyApi", it.toString()) } else SpotifyHttpLogger.NONE
         auth?.let { SpotifyClient.create(it.manager, logger) }
+    }
+
+    val onboardingAuth: OnboardingAuth? by lazy {
+        auth?.let { current -> object : OnboardingAuth {
+            override val state = current.manager.state
+            override suspend fun restore(): AuthState = current.manager.restore()
+            override suspend fun login(openBrowser: suspend (URI) -> Unit, verifying: () -> Unit) {
+                val input = current.authorization.authorize(openBrowser)
+                verifying()
+                current.manager.completeLogin(input)
+            }
+            override suspend fun signOut() = current.manager.signOut()
+        } }
+    }
+
+    val playlistSetup: PlaylistSetup? by lazy {
+        val current = auth
+        val api = spotify
+        if (current == null || api == null) null else PlaylistSetupRepository(
+            current.manager::requireAccount,
+            object : SetupApi {
+                override suspend fun create(name: String, description: String) = api.createPlaylist(name, description)
+                override suspend fun get(id: String) = api.playlist(id)
+                override suspend fun ownPlaylists(offset: Int) = api.myPlaylists(offset)
+            },
+            RoomSetupPersistence(database, FileCreationJournal(File(appContext.noBackupFilesDir, "playlist-setup"))),
+        )
     }
 }

@@ -128,6 +128,26 @@ Record test ID, build SHA, Android/OxygenOS version, timestamp, sanitized HTTP s
 ## UI acceptance suite (v1.2)
 Execute `UI-TC-001` through `UI-TC-018` defined in `06-UI-UX.md` as part of M5 acceptance. Include screenshot/manual review on OnePlus Ace 5 OxygenOS 16 for narrow width, 1.3x font scale, TalkBack, reduced motion, empty/offline/partial coverage and remote-pending states. A visually successful UI cannot override a failed domain/API test.
 
+### Early 050A/050B checkpoint (before M3/M4)
+
+See [M5-UI-FOUNDATION-ONBOARDING.md](M5-UI-FOUNDATION-ONBOARDING.md). This checkpoint does not certify
+the full UI suite or M5. Added acceptance for the FR-002 setup prerequisite:
+
+| ID | Scenario | Expected |
+|---|---|---|
+| UI-SETUP-001 | Create/link without confirmation | No remote request |
+| UI-SETUP-002 | Create then restart/double-tap | Durable attempt before POST; one creation; persisted mapping opens shell |
+| UI-SETUP-003 | Lost response/failed privacy readback | Known ID or paginated marker discovery; no second POST; explicit link fallback |
+| UI-SETUP-004 | Wrong owner/public/unknown privacy/collaborative/missing snapshot | No saved mapping and no entry to the authenticated shell |
+| UI-SETUP-005 | Account changes during verification | No playlist mapping attached to the new account |
+| UI-SETUP-006 | Missing/ambiguous discovery/corrupt journal | Fail closed; no new creation marker or automatic duplicate |
+
+`OnboardingViewModelTest` uses fake auth/setup for restore, cancel, browser failure, account mismatch,
+duplicate actions and setup failure. `PlaylistSetupTest` uses fake API/persistence plus temporary files.
+`ReplayUiTest` and `ReplayLauncherTest` exercise native Compose with Robolectric, including confirmation,
+four selected tabs/secondary Settings, scroll restoration, 320dp/font 1.3 and landscape. Optional render
+PNGs contain synthetic, account-free states only. Physical OnePlus/TalkBack/live OAuth remain separate.
+
 ## v1.3 visual reference acceptance (UI-VR-001..010)
 
 | ID | Test | Expected |

@@ -109,6 +109,12 @@ ambiguous POSTs flagged for remote verification, and logs limited to endpoint/st
 
 Next planned task: TASK-030, Recently Played pagination, watermark and gap detection.
 
+**Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
+before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
+and confirmed create/link setup are implemented; verification status and limitations are recorded in
+[M5-UI-FOUNDATION-ONBOARDING.md](M5-UI-FOUNDATION-ONBOARDING.md). Full feature screens, history,
+qualification, membership/outbox and background sync remain open. This does not mark M5 Released.
+
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.
 - Document status: `Baseline` (this version), `Verified` (after gates), `Implemented`, `Released`.
