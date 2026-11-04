@@ -44,7 +44,7 @@ Spotify AutoPlaylist is a personal, non-commercial Android application. It obser
 
 Current implementation: TASK-003 OAuth spike has source, 32 passing local JVM tests, passing lint,
 and a built debug APK. See [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md) for evidence and the pending OnePlus checklist.
-GitHub Actions workflow is prepared; no remote CI or live Spotify/device gate pass is claimed.
+GitHub Actions run/fix evidence is recorded in the spike report; live Spotify/device gates remain pending.
 Document status remains Baseline until integration gates are verified.
 
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.

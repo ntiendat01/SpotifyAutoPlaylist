@@ -78,7 +78,11 @@ If loopback fails on OxygenOS, stop broad implementation and evaluate a verified
   same 32 passing tests and unchanged APK checksum.
 - APK: `app/build/outputs/apk/debug/app-debug.apk`; Android debug signature verified with `apksigner`.
 - APK SHA-256: `ad063f30bdd8300bac1e8b0ccfc9865b0eb5e1ed66ec99e6197c7896bcdb3eed`.
-- GitHub Actions: workflow prepared; no remote run claimed before it actually executes.
+- Initial [GitHub Actions run 41835892614](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41835892614)
+  failed before Gradle: setup-android's default `tools platform-tools` attempted `sdkmanager tools`,
+  which reported `Failed to find package 'tools'`. The workflow now explicitly installs `platform-tools`
+  in that action; pinned API 36 / build-tools 35.0.0 remain in the next step. Action SHA and command-line
+  tools version are unchanged. Follow-up CI evidence is tracked in GitHub Actions for the fix commit.
 - `GATE-AUTH-01`, `GATE-ACCOUNT-01`, `GATE-API-01`: **pending**.
 
 ## Official references checked during implementation
