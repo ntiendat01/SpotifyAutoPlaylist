@@ -12,6 +12,7 @@ Version 1.3.0 · Status: Baseline
 - [ ] TASK-003 Prototype OAuth PKCE + loopback callback on physical OnePlus; test login, cancellation and port collision.
   - Spike source, tests and minimal Android/CI harness: [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md). Device gate pending; M1 and production auth remain separate.
 - [ ] TASK-004 Smoke-test Recently Played and private playlist create/read/add endpoints; sanitize results.
+  - Native manual probe, recovery journal and tests: [M0-API-SPIKE.md](M0-API-SPIKE.md). Real OnePlus endpoint evidence pending.
 - [ ] TASK-005 Record outcome in `docs/README.md` status and any API deviations.
 **Exit:** GATE-ACCOUNT-01, GATE-API-01 and GATE-AUTH-01 pass. If either fails, stop and revise architecture; do not fake success.
 

@@ -4,6 +4,13 @@ Version 1.1.0 · Status: Baseline · Storage: Room/SQLite + DataStore + encrypte
 
 ## 1. Relational schema (logical; implement with Room entities)
 
+M0 TASK-004 prerequisite (not the Room implementation): an atomic app-private no-backup JSON operation
+journal stores marker, playlist ID, one explicitly selected test track and write-recovery state. It is
+namespaced by SHA-256(Client ID + immutable `/me.account_id`), contains no token or listening events,
+and fails closed on corruption. This does not implement the schema below; reconcile production identity
+keys before M2, and do not silently discard/recreate remote playlists when moving beyond the probe.
+See [M0-API-SPIKE.md](M0-API-SPIKE.md).
+
 ### `account`
 - `spotify_user_id TEXT PRIMARY KEY`
 - `display_name TEXT NULL`, `connected_at_ms INTEGER NOT NULL`

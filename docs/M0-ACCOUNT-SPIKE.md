@@ -1,6 +1,8 @@
 # TASK-002A — Verify the configured Spotify owner after OAuth
 
 Scope: extend the M0 diagnostic APK with one `GET https://api.spotify.com/v1/me`.
+Historical TASK-002A baseline: current APK extends this with [TASK-004 API smoke tests](M0-API-SPIKE.md),
+memory-only verified sessions and an account-scoped operation journal. The baseline behavior/evidence below is retained.
 Code/automated tests do not establish live account/Premium/app-owner/playlist ownership gates.
 
 ## Acceptance contract

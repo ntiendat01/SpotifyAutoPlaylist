@@ -15,6 +15,9 @@ Prototype tests do not mark live OAuth/account/API gates as passed.
 TASK-002A/TC-032 profile verification coverage and device checklist: [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md).
 No actual account IDs or tokens in fixtures. TC-031/034's owned-playlist E2E portions remain outside this probe.
 
+TASK-004 smoke-level API/journal coverage, dummy fixtures and pending device checklist:
+[M0-API-SPIKE.md](M0-API-SPIKE.md). Unit/integration evidence cannot mark the real endpoint gate passed.
+
 ## 2. Core cases
 | ID | Type | Scenario | Expected |
 |---|---|---|---|

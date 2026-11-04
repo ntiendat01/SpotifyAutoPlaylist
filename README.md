@@ -1,14 +1,17 @@
 # Spotify AutoPlaylist · replay.
 
 Personal Android companion that will collect repeat-play tracks into a real private Spotify playlist.
-Requirements: [docs/README.md](docs/README.md). Current scope: **TASK-003 OAuth + TASK-002A identity spike**.
+Requirements: [docs/README.md](docs/README.md). Current scope: **TASK-004 manual API smoke test**.
 
 This test harness opens browser authorization, receives a loopback callback, validates PKCE/state,
 and exchanges the one-time code. It validates response shape/scopes, calls `GET /v1/me`, compares
-the returned `id` to a separately entered expected developer-owner user ID, then discards the token.
+the returned `id` to a separately entered expected developer-owner user ID, then keeps the verified token
+in memory for manual API checks. TASK-004 also requires immutable `/me.account_id` to isolate recovery state.
 No tokens, codes or raw HTTP bodies are logged, displayed or persisted. No client secret is used.
-History calls, playlist writes, persistent login and workers are not implemented yet.
-Matching `/me.id` does **not** prove Premium, Developer App ownership or playlist endpoint access.
+It can read one Recent page, create/link a real owned private playlist, and append one explicitly chosen
+test track after confirmation. Every write is reconciled; Added requires a remote readback.
+Persistent sign-in, full history sync, counting rules and workers are not implemented yet.
+Matching `/me.id` does **not** prove Premium or Developer App ownership.
 
 ## Try on OnePlus
 
@@ -22,15 +25,23 @@ Matching `/me.id` does **not** prove Premium, Developer App ownership or playlis
    display name, email, Client ID, full profile URL or `account_id`. The field is masked and memory-only.
 5. Tap **Kết nối Spotify**, complete login/consent in the browser, then manually return to replay.
    Only OAuth 200 **and** `/me` 200 **and** exact expected-ID match produce success. Wrong account is rejected.
-6. Record only safe outcome/status using [the identity checklist](docs/M0-ACCOUNT-SPIKE.md).
+6. Read Recently Played, then confirm creating/finding a private playlist or explicitly link one you own.
+   Paste a **track** link from Spotify and confirm adding one test track. Use **Đối soát lại Spotify**
+   after uncertain results or a reconnect. Never assume a POST 201 alone means the track is present.
+7. Record only safe outcome/status using [the API checklist](docs/M0-API-SPIKE.md).
    Never copy callback URLs or capture the browser address bar: it can contain an authorization code.
-7. Test wrong account, deny, cancel, retry, rotation, timeout, port collision and process death on device.
+8. Test repeat/reconnect (no duplicate), cancel during writes, and external track removal (no re-add).
+   Original auth/account checklists still apply.
 
 Callback waits at most three minutes. Closing the browser cannot be detected automatically;
 return and tap **Hủy đăng nhập**, or wait for timeout. Process death loses the attempt: start a new login.
-This separate application ID is `com.spotifyautoplaylist.spike`. No account/token data is saved.
-Version: `0.2.0-account-spike` (versionCode 2). A different debug signing key may require removing
-the previous disposable probe before installation. There is no persisted history in this probe.
+This separate application ID is `com.spotifyautoplaylist.spike`. Tokens and listening events are not saved.
+Version: `0.3.0-api-spike` (versionCode 3). App-private no-backup journal retains only marker,
+playlist ID, one selected test-track ID and recovery state, keyed by hashed account ID + Client ID.
+Do not delete that journal to retry a write. Corruption/storage failure stops the session.
+A different debug signing key may require removing the previous probe before installing. Uninstall
+loses local recovery state; real playlists remain. Link the existing smoke playlist after reinstall.
+End/cancel/expiry/process death loses the memory-only token and requires a fresh login.
 Screen capture/recent-task snapshots are blocked in this spike; product visual QA is a later task.
 
 ## Pinned toolchain
@@ -74,7 +85,7 @@ Device/live integration gates cannot be replaced by CI tests.
 
 ## Code boundaries
 
-- `auth-core/`: Android-independent PKCE, bounded loopback listener, cancellable token/profile probes;
+- `auth-core/`: Android-independent PKCE, bounded loopback listener, token/profile/API probes and atomic recovery journal;
   JVM tests using dummy data, localhost sockets and MockWebServer.
 - `app/`: native Compose diagnostic screen, lifecycle-aware browser launch and ViewModel.
 - `.github/workflows/android-ci.yml`: JVM/Android unit tests, lint and debug APK.

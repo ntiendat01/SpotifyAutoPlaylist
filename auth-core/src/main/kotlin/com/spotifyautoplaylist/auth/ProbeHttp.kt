@@ -28,6 +28,8 @@ internal suspend fun <T> OkHttpClient.probeJson(
     httpFailure: ProbeFailure,
     responseFailure: ProbeFailure,
     discard: (T) -> Unit = {},
+    expectedStatus: Int = 200,
+    maxBytes: Long = 65_536,
     parse: (JsonObject) -> T,
 ): T = suspendCancellableCoroutine { continuation ->
     val call = newCall(request)
@@ -40,12 +42,12 @@ internal suspend fun <T> OkHttpClient.probeJson(
         override fun onResponse(call: Call, response: Response) {
             try {
                 val json = response.use {
-                    if (it.code != 200) throw ProbeException(
-                        httpFailure, it.code,
+                    if (it.code != expectedStatus) throw ProbeException(
+                        if (it.code == 429 && quotaExceeded(it)) ProbeFailure.QUOTA_EXCEEDED else httpFailure, it.code,
                         if (it.code == 429) retryAfterSeconds(it.header("Retry-After")) ?: 60 else null,
                     )
                     val source = it.body?.source() ?: throw ProbeException(responseFailure)
-                    if (source.request(65_537)) throw ProbeException(responseFailure)
+                    if (source.request(maxBytes + 1)) throw ProbeException(responseFailure)
                     Json.parseToJsonElement(source.readUtf8()).jsonObject
                 }
                 // Do not allocate a credential-bearing result until the response is closed.
@@ -63,6 +65,12 @@ internal suspend fun <T> OkHttpClient.probeJson(
         }
     })
 }
+
+private fun quotaExceeded(response: Response): Boolean = try {
+    val json = Json.parseToJsonElement(response.peekBody(4_096).string()).jsonObject
+    val error = json["error"] as? JsonObject
+    (error?.get("reason") ?: json["reason"])?.toString() == "\"QUOTA_EXCEEDED\""
+} catch (_: Exception) { false }
 
 internal fun retryAfterSeconds(header: String?, now: Instant = Instant.now()): Long? {
     val value = header?.trim() ?: return null

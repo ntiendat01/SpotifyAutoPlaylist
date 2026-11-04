@@ -23,6 +23,11 @@ Current Spotify docs recommend immutable `account_id` for **persistent** account
 this with the database/account-isolation contract before M2. M0 performs no persistent linking and
 does not silently substitute `account_id` for the configured user ID. See [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md).
 
+TASK-004 extends that baseline: verify `/me.id` exactly, additionally require immutable `account_id`
+for a hashed account/client operation-journal namespace, and keep the token only for the current manual
+session. The journal stores marker/playlist ID/one selected test-track ID/recovery state, never tokens
+or history. See [M0-API-SPIKE.md](M0-API-SPIKE.md) for confirmation, creation recovery and readback contracts.
+
 - Authorization URL `https://accounts.spotify.com/authorize`.
 - `response_type=code`, `client_id`, `redirect_uri`, `scope`, random `state`, `code_challenge_method=S256`, `code_challenge=BASE64URL(SHA256(verifier))`.
 - Verifier: secure random, 43–128 chars. Check exact state match, one-time code, callback URI and timeout.
@@ -49,6 +54,7 @@ Avoid extra scopes by default. Test permission errors explicitly.
 | API-04 | `POST /v1/playlists/{id}/items` | Append tracks | JSON `{ "uris": ["spotify:track:<id>"] }`; max 100/request; expect 201 with `snapshot_id` |
 | API-05 | `GET /v1/me/playlists` | Discover owned playlist | Use if local playlist ID missing; paginate; verify owner |
 | API-06 | `GET /v1/me` | Verify user identity | Confirm stable Spotify user ID; do not assume fields removed in 2026 exist |
+| API-07 | `GET /v1/playlists/{id}` | Ownership/privacy/snapshot verification | Require owner.id match, public:false, collaborative:false and valid snapshot before writes |
 
 **Use `/items`, not deprecated `/tracks`, for playlist item operations.** `GET /playlists/{id}/items` returns contents for playlists owned by or collaborative with the user; use only owned playlists in v1.
 

@@ -16,6 +16,10 @@ object OwnerIdentity {
 
 data class AccountProbeResult(val httpStatus: Int, val maskedUserId: String)
 
+internal class CheckedIdentity(val summary: AccountProbeResult, val accountId: String?) {
+    override fun toString() = "CheckedIdentity(<redacted>)"
+}
+
 fun interface AccountVerification {
     suspend fun verify(grant: TokenGrant, expectedOwnerId: String): AccountProbeResult
 }
@@ -28,22 +32,28 @@ class AccountProbe internal constructor(
 
     override suspend fun verify(grant: TokenGrant, expectedOwnerId: String): AccountProbeResult {
         try {
-            if (!OwnerIdentity.isValid(expectedOwnerId)) throw ProbeException(ProbeFailure.INVALID_OWNER_ID)
-            val request = Request.Builder().url(endpoint)
-                .header("Authorization", "Bearer ${grant.requireAccessToken()}")
-                .header("Cache-Control", "no-store").get().build()
-            return client.probeJson(request, ProbeFailure.PROFILE_HTTP, ProbeFailure.PROFILE_RESPONSE) { json ->
-                val idField = json["id"]?.jsonPrimitive
-                val id = idField?.content
-                if (idField?.isString != true || id == null || !OwnerIdentity.isValid(id)) {
-                    throw ProbeException(ProbeFailure.PROFILE_RESPONSE, 200)
-                }
-                if (id != expectedOwnerId) throw ProbeException(ProbeFailure.ACCOUNT_MISMATCH, 200)
-                // Discard all other profile fields, including email, display_name and product.
-                AccountProbeResult(200, OwnerIdentity.mask(id))
-            }
+            return inspect(grant, expectedOwnerId).summary
         } finally {
             grant.close()
+        }
+    }
+
+    internal suspend fun inspect(grant: TokenGrant, expectedOwnerId: String): CheckedIdentity {
+        if (!OwnerIdentity.isValid(expectedOwnerId)) throw ProbeException(ProbeFailure.INVALID_OWNER_ID)
+        val request = Request.Builder().url(endpoint)
+            .header("Authorization", "Bearer ${grant.requireAccessToken()}")
+            .header("Cache-Control", "no-store").get().build()
+        return client.probeJson(request, ProbeFailure.PROFILE_HTTP, ProbeFailure.PROFILE_RESPONSE) { json ->
+            val idField = json["id"]?.jsonPrimitive
+            val id = idField?.content
+            if (idField?.isString != true || id == null || !OwnerIdentity.isValid(id)) {
+                throw ProbeException(ProbeFailure.PROFILE_RESPONSE, 200)
+            }
+            if (id != expectedOwnerId) throw ProbeException(ProbeFailure.ACCOUNT_MISMATCH, 200)
+            // Discard all other profile fields, including email, display_name and product.
+            val accountField = json["account_id"]?.jsonPrimitive
+            val accountId = accountField?.takeIf { it.isString }?.content?.takeIf(OwnerIdentity::isValid)
+            CheckedIdentity(AccountProbeResult(200, OwnerIdentity.mask(id)), accountId)
         }
     }
 }

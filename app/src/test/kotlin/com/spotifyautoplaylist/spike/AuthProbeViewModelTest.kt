@@ -13,6 +13,12 @@ import com.spotifyautoplaylist.auth.TokenProbeResult
 import com.spotifyautoplaylist.auth.TokenGrant
 import com.spotifyautoplaylist.auth.AccountProbeResult
 import com.spotifyautoplaylist.auth.AccountVerification
+import com.spotifyautoplaylist.auth.SmokeSession
+import com.spotifyautoplaylist.auth.SmokeSessionFactory
+import com.spotifyautoplaylist.auth.SmokeView
+import com.spotifyautoplaylist.auth.SmokeReport
+import com.spotifyautoplaylist.auth.SmokeOutcome
+import com.spotifyautoplaylist.auth.RecentSmokeResult
 import java.net.URLDecoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
@@ -337,12 +343,114 @@ class AuthProbeViewModelTest {
         exchange: TokenExchange = TokenExchange { dummyGrant() },
         accounts: AccountVerification = AccountVerification { _, id -> AccountProbeResult(200, "••••${id.takeLast(4)}") },
         nanoTime: () -> Long = System::nanoTime,
-    ) = AuthProbeViewModel(factory, exchange, dispatcher, accounts, nanoTime).also {
+        smokeFactory: SmokeSessionFactory? = null,
+    ) = AuthProbeViewModel(factory, exchange, dispatcher, accounts, nanoTime, smokeFactory).also {
         store.put("probe", it)
         it.editExpectedOwnerId("dummy-owner")
     }
 
     private fun dummyGrant() = TokenGrant(TokenProbeResult(200, SpotifyAuth.scopes, 3600), "dummy-access-token")
+
+    @Test fun `verified smoke session retains token only until explicit end and freezes account inputs`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        val session = FakeSmokeSession(grant)
+        val model = model(exchange = TokenExchange { grant }, smokeFactory = SmokeSessionFactory { received, owner, client ->
+            assertSame(grant, received); assertEquals("dummy-owner", owner); assertEquals(dummyId, client)
+            session
+        })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId); model.start(); runCurrent()
+        assertTrue(model.state.value.sessionReady)
+        assertFalse(grant.isClosed)
+        model.editClientId("f".repeat(32)); model.editExpectedOwnerId("other")
+        assertEquals(dummyId, model.state.value.clientId)
+        assertEquals("dummy-owner", model.state.value.expectedOwnerId)
+        model.endSession()
+        assertTrue(grant.isClosed)
+        assertFalse(model.state.value.sessionReady)
+        assertNull(model.state.value.smoke)
+    }
+
+    @Test fun `smoke factory failure never exposes an active session and releases token`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        val model = model(exchange = TokenExchange { grant }, smokeFactory = SmokeSessionFactory { _, _, _ ->
+            throw ProbeException(ProbeFailure.ACCOUNT_MISMATCH, 200)
+        })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId); model.start(); runCurrent()
+        model.runSmoke(SmokeAction.CREATE, true)
+        assertFalse(model.state.value.sessionReady)
+        assertNull(model.state.value.account)
+        assertTrue(grant.isClosed)
+    }
+
+    @Test fun `double tap is serialized and cancellation of API closes session without success`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        var calls = 0
+        val session = object : FakeSmokeSession(grant) {
+            override suspend fun recent(): RecentSmokeResult { calls++; awaitCancellation() }
+        }
+        val model = model(exchange = TokenExchange { grant }, smokeFactory = SmokeSessionFactory { _, _, _ -> session })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId); model.start(); runCurrent()
+        model.runSmoke(SmokeAction.RECENT); model.runSmoke(SmokeAction.RECENT); runCurrent()
+        assertEquals(1, calls)
+        model.cancel(); runCurrent()
+        assertTrue(grant.isClosed)
+        assertFalse(model.state.value.sessionReady)
+        assertNull(model.state.value.report)
+    }
+
+    @Test fun `API authentication quota or journal failure ends session and clears remote proof`() = runTest(dispatcher) {
+        for ((reason, status) in listOf(ProbeFailure.API_HTTP to 401, ProbeFailure.QUOTA_EXCEEDED to 429, ProbeFailure.JOURNAL to null)) {
+            val grant = dummyGrant()
+            val session = object : FakeSmokeSession(grant) {
+                override suspend fun recent(): RecentSmokeResult { throw ProbeException(reason, status, if (status == 429) 60 else null) }
+            }
+            val model = model(exchange = TokenExchange { grant }, smokeFactory = SmokeSessionFactory { _, _, _ -> session })
+            backgroundScope.async { model.browserRequests.first() }
+            model.editClientId(dummyId); model.start(); runCurrent()
+            model.runSmoke(SmokeAction.RECENT); runCurrent()
+            assertEquals(reason, model.state.value.failure)
+            assertFalse(model.state.value.sessionReady)
+            assertNull(model.state.value.smoke)
+            assertTrue(grant.isClosed)
+        }
+    }
+
+    @Test fun `add confirmation and captured input reach session and report remains remote sourced`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        var capturedInput = ""
+        var capturedConfirmed = false
+        val session = object : FakeSmokeSession(grant) {
+            override suspend fun addTrack(input: String, confirmed: Boolean): SmokeReport {
+                capturedInput = input; capturedConfirmed = confirmed
+                return SmokeReport(SmokeOutcome.ALREADY_PRESENT, 2)
+            }
+        }
+        val model = model(exchange = TokenExchange { grant }, smokeFactory = SmokeSessionFactory { _, _, _ -> session })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId); model.start(); runCurrent()
+        model.editTrack("newer-input")
+        model.runSmoke(SmokeAction.ADD, confirmed = true, input = "confirmed-input"); runCurrent()
+        assertEquals("confirmed-input", capturedInput)
+        assertTrue(capturedConfirmed)
+        assertEquals(SmokeOutcome.ALREADY_PRESENT, model.state.value.report?.outcome)
+        assertNull(model.state.value.report?.postStatus)
+        store.clear()
+        assertTrue(grant.isClosed)
+    }
+
+    private open class FakeSmokeSession(private val grant: TokenGrant) : SmokeSession {
+        override val account = AccountProbeResult(200, "••••wner")
+        override fun snapshot() = SmokeView()
+        override suspend fun recent() = RecentSmokeResult(0, 0, 0)
+        override suspend fun preparePlaylist(confirmed: Boolean) = SmokeReport(SmokeOutcome.PLAYLIST_READY)
+        override suspend fun linkPlaylist(input: String, confirmed: Boolean) = SmokeReport(SmokeOutcome.PLAYLIST_READY)
+        override suspend fun addTrack(input: String, confirmed: Boolean) = SmokeReport(SmokeOutcome.PRESENT)
+        override suspend fun reconcile() = SmokeReport(SmokeOutcome.ABSENT_RETRY_READY)
+        override fun close() = grant.close()
+    }
 
     private class FakeListener(private val failure: ProbeFailure? = null) : CallbackListener {
         var closed = false
