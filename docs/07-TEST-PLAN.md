@@ -77,6 +77,23 @@ Create deterministic JSON fixtures:
 - FR-014 / AUTH-006 → TC-031..034
 
 ## 5. CI gates
+
+TASK-010 scaffold verification: run
+`./gradlew --no-daemon :auth-core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`
+against the committed dependency locks. On a cached local toolchain, add `--offline --rerun-tasks`
+to verify compilation and execute tests again. Check wrapper JAR/distribution hashes, test XML totals,
+lint results, APK metadata and debug signature. Record the source revision and distinguish prior CI
+evidence from CI for the current changes in [M1-ANDROID-SCAFFOLD.md](M1-ANDROID-SCAFFOLD.md).
+This checks build infrastructure; it does not complete TASK-012's device/navigation acceptance.
+
+TASK-011 workflow/artifact acceptance: observe a successful GitHub Actions run for the actual
+workflow/build-source commit, including `:auth-core:test`, `:app:testDebugUnitTest`, `:app:lintDebug`,
+`:app:assembleDebug` and `apksigner verify`. Download both artifacts, verify the APK's SHA-256 against
+the packaged checksum, compare packaged source SHA with the run, inspect APK version/package metadata
+and recheck the downloaded signature. Parse uploaded JUnit/lint XML to verify test counts and failures;
+do not infer test counts from a green upload step. Record run/commit/artifact IDs and checksum in
+[M1-ANDROID-CI.md](M1-ANDROID-CI.md). These dummy-data tests do not establish live Spotify gates.
+
 1. Gradle compile and Kotlin lint/static checks (configured when scaffolded).
 2. Unit tests all green; Room DAO tests green.
 3. Integration mock tests green.

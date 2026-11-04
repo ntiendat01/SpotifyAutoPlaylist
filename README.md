@@ -1,7 +1,8 @@
 # Spotify AutoPlaylist · replay.
 
 Personal Android companion that will collect repeat-play tracks into a real private Spotify playlist.
-Requirements: [docs/README.md](docs/README.md). Current scope: **TASK-004 manual API smoke test**.
+Requirements: [docs/README.md](docs/README.md). Current runtime scope: **TASK-004 manual API smoke test**;
+TASK-010 audits and reuses this Android/Compose scaffold. See [the scaffold report](docs/M1-ANDROID-SCAFFOLD.md).
 
 This test harness opens browser authorization, receives a loopback callback, validates PKCE/state,
 and exchanges the one-time code. It validates response shape/scopes, calls `GET /v1/me`, compares
@@ -59,13 +60,19 @@ Screen capture/recent-task snapshots are blocked in this spike; product visual Q
 | OkHttp | 4.12.0 |
 | Kotlin serialization JSON | 1.9.0 |
 | SDK compile / target / minimum | 36 / 36 / 29 |
-| SDK build tools | 35.0.0; AGP default |
+| SDK build tools | 35.0.0; explicitly pinned |
 
-Dependency locks are committed per module; version catalog: `gradle/libs.versions.toml`.
+Dependency locks are committed per module; version catalog: `gradle/libs.versions.toml`, including
+compile/target/minimum SDK and Build Tools pins consumed by the app build script.
 No dynamic versions. CI actions use commit SHAs. Compatibility references:
 [AGP](https://developer.android.com/build/releases/agp-8-13-0-release-notes),
 [Kotlin](https://kotlinlang.org/docs/gradle-configure-project.html),
 [Compose](https://developer.android.com/develop/ui/compose/bom/bom-mapping).
+
+Compatibility qualification: Kotlin's published table lists AGP through 8.11.1 as fully supported for
+Kotlin 2.2.21. This project retains AGP 8.13.2 and verifies the combination with its own compile/test/lint
+checks; that evidence does not extend the vendor's fully supported range. See the scaffold report
+for observed results and remaining device/CI acceptance.
 
 ## Build without Android Studio
 
@@ -82,6 +89,22 @@ JVM HTML reports: `auth-core/build/reports/tests/test/index.html` and
 `app/build/reports/tests/testDebugUnitTest/index.html`.
 GitHub Actions runs the same checks and uploads APK/reports without Spotify credentials.
 Device/live integration gates cannot be replaced by CI tests.
+
+## Download a CI build
+
+Open the successful **Android CI** run for the source commit you want to test. Under **Artifacts**,
+download `replay-auth-spike-debug-apk` and unzip it. The artifact contains `app-debug.apk`,
+`app-debug.apk.sha256`, `output-metadata.json` and `source-commit.txt`. On macOS, check the downloaded
+APK from that folder with `shasum -a 256 -c app-debug.apk.sha256`; compare `source-commit.txt` with
+the run's source SHA. GitHub login and repository read access are required. Artifacts are retained
+for 14 days by this workflow.
+
+`auth-spike-test-reports` contains HTML reports plus JUnit/lint XML for inspecting actual test totals.
+The APK's signature is verified before upload. These are disposable debug builds; a new CI runner
+may use a different debug signing key, so in-place device updates are not guaranteed. Stable signing
+is TASK-013/054. Device installation and launch acceptance remain TASK-012.
+
+TASK-011 workflow/artifact evidence: [M1-ANDROID-CI.md](docs/M1-ANDROID-CI.md).
 
 ## Code boundaries
 

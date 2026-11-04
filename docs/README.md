@@ -55,7 +55,21 @@ See [M0-API-SPIKE.md](M0-API-SPIKE.md) for the device outcome, privacy observati
 GitHub Actions run/fix evidence is recorded in the spike report; no new CI run is claimed for TASK-005.
 Document status remains Baseline until full OAuth/account/API gate evidence is verified. Overall
 TASK-004 signoff does not certify all device recovery cases, Premium/app ownership or automatic private
-creation. Next planned task: TASK-010, audit/reuse the existing pinned Android scaffold before M1 signoff.
+creation.
+
+**TASK-010: PASS — local scaffold verification on 2026-11-04.** Reused the existing Android/Compose
+project, moved SDK pins into the version catalog and explicitly pinned Build Tools 35.0.0. A fresh
+offline rerun observed 84 passing JVM tests, lint and debug APK assembly; signature verified.
+See [M1-ANDROID-SCAFFOLD.md](M1-ANDROID-SCAFFOLD.md) for wrapper hashes, artifact evidence and
+compatibility limits. TASK-011 subsequently verified the TASK-010 build configuration on GitHub Actions.
+
+**TASK-011: PASS — CI and downloaded artifacts verified on 2026-11-04.**
+[Run 41860277255](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41860277255),
+commit `f7a1f01` on `codex/task-011-ci`, passed 84 JVM tests, lint, APK assembly, signature verification
+and artifact uploads. Downloaded APK checksum/source SHA/signature/metadata and uploaded JUnit/lint
+XML were independently checked. See [M1-ANDROID-CI.md](M1-ANDROID-CI.md) for artifact links and
+non-blocking action/runner maintenance notices. The CI branch has not been merged into `Dev`/`main`.
+Next planned task: TASK-012, OnePlus installation/launch/navigation acceptance.
 
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.
