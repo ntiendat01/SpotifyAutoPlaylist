@@ -6,12 +6,13 @@ plugins {
 
 android {
     namespace = "com.spotifyautoplaylist.spike"
-    compileSdk = 36
+    compileSdk = libs.versions.android.compile.sdk.get().toInt()
+    buildToolsVersion = libs.versions.android.build.tools.get()
 
     defaultConfig {
         applicationId = "com.spotifyautoplaylist.spike"
-        minSdk = 29
-        targetSdk = 36
+        minSdk = libs.versions.android.min.sdk.get().toInt()
+        targetSdk = libs.versions.android.target.sdk.get().toInt()
         versionCode = 3
         versionName = "0.3.0-api-spike"
     }
