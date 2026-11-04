@@ -15,8 +15,11 @@ Prototype tests do not mark live OAuth/account/API gates as passed.
 TASK-002A/TC-032 profile verification coverage and device checklist: [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md).
 No actual account IDs or tokens in fixtures. TC-031/034's owned-playlist E2E portions remain outside this probe.
 
-TASK-004 smoke-level API/journal coverage, dummy fixtures and pending device checklist:
-[M0-API-SPIKE.md](M0-API-SPIKE.md). Unit/integration evidence cannot mark the real endpoint gate passed.
+TASK-004 smoke-level API/journal coverage, dummy fixtures and device procedure:
+[M0-API-SPIKE.md](M0-API-SPIKE.md). Overall manual smoke test is PASS — user-reported on 2026-11-04,
+recorded by TASK-005. This does not supply individual recovery-case results or automatic private-create
+evidence. Unit/integration evidence cannot mark the real endpoint gate passed. Full E2E cases below
+remain separate from the limited smoke-test signoff.
 
 ## 2. Core cases
 | ID | Type | Scenario | Expected |

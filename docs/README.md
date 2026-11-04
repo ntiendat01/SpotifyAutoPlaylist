@@ -1,6 +1,6 @@
 # Spotify AutoPlaylist — MVP Specification Index
 
-> Version: 1.3.0 · Status: **Baseline / implementation-ready with external integration gates** · Updated: 2026-11-04  
+> Version: 1.3.0 · Status: **Baseline / TASK-004 user signoff recorded; full gate evidence incomplete** · Updated: 2026-11-04
 > Language: Vietnamese · Target: OnePlus Ace 5 / OxygenOS 16 · Owner: Personal project
 
 ## Product at a glance
@@ -43,12 +43,19 @@ Spotify AutoPlaylist is a personal, non-commercial Android application. It obser
 ## Traceability and change control
 
 Current implementation: TASK-004 extends the OAuth/identity spike with manual Recent and private-playlist API checks.
-Local evidence: 84 passing JVM tests, lint and a signed debug APK (`0.3.0-api-spike`).
-See [M0-API-SPIKE.md](M0-API-SPIKE.md) for current scope and pending device gates;
+**TASK-004: PASS — user-reported on 2026-11-04. TASK-005: outcome and deviation recorded.**
+The user reports success after making the playlist private in Spotify, then signs off TASK-004.
+Automatic private creation is not separately proven by that manual privacy change; no per-endpoint
+HTTP statuses, installed APK checksum or exact device version were supplied with this signoff.
+Historical local evidence: 84 passing JVM tests, lint and a signed debug APK (`0.3.0-api-spike`);
+these checks were not rerun for the documentation-only TASK-005.
+See [M0-API-SPIKE.md](M0-API-SPIKE.md) for the device outcome, privacy observation and gate evidence limits;
 [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md) retains the 52-test identity baseline;
 [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md) retains the original 32-test baseline and build evidence.
-GitHub Actions run/fix evidence is recorded in the spike report; live Spotify/device gates remain pending.
-Document status remains Baseline until integration gates are verified.
+GitHub Actions run/fix evidence is recorded in the spike report; no new CI run is claimed for TASK-005.
+Document status remains Baseline until full OAuth/account/API gate evidence is verified. Overall
+TASK-004 signoff does not certify all device recovery cases, Premium/app ownership or automatic private
+creation. Next planned task: TASK-010, audit/reuse the existing pinned Android scaffold before M1 signoff.
 
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.

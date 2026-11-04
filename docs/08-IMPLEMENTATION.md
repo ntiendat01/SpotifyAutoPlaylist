@@ -11,13 +11,19 @@ Version 1.3.0 · Status: Baseline
   - Code and tests: [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md). Live identity match and ownership evidence pending.
 - [ ] TASK-003 Prototype OAuth PKCE + loopback callback on physical OnePlus; test login, cancellation and port collision.
   - Spike source, tests and minimal Android/CI harness: [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md). Device gate pending; M1 and production auth remain separate.
-- [ ] TASK-004 Smoke-test Recently Played and private playlist create/read/add endpoints; sanitize results.
-  - Native manual probe, recovery journal and tests: [M0-API-SPIKE.md](M0-API-SPIKE.md). Real OnePlus endpoint evidence pending.
-- [ ] TASK-005 Record outcome in `docs/README.md` status and any API deviations.
+- [x] TASK-004 Smoke-test Recently Played and private playlist create/read/add endpoints; sanitize results.
+  - **PASS — user-reported, 2026-11-04.** Native probe, recovery journal, tests and signoff limits:
+    [M0-API-SPIKE.md](M0-API-SPIKE.md). User reports success after manually making the playlist private;
+    individual endpoint evidence and automatic private creation are not separately verified.
+- [x] TASK-005 Record outcome in `docs/README.md` status and any API deviations.
+  - Recorded user signoff, privacy observation, historical build evidence and remaining gate evidence gaps.
+    This documentation-only task does not mark all of M0 Verified or complete the earlier device checklists.
 **Exit:** GATE-ACCOUNT-01, GATE-API-01 and GATE-AUTH-01 pass. If either fails, stop and revise architecture; do not fake success.
 
 ### M1 — Buildable Android shell
 - [ ] TASK-010 Generate Kotlin/Compose Gradle project (Gradle wrapper, Android Gradle Plugin, Java toolchain, SDK versions pinned and verified).
+  - Next task: audit/reuse the existing spike scaffold and pinned versions; do not regenerate it or
+    assume the remaining M1 device/CI acceptance is complete. Broad implementation still requires M0 exit.
 - [ ] TASK-011 Build GitHub Actions `assembleDebug` workflow and upload APK artifact.
 - [ ] TASK-012 Install APK on OnePlus, verify launch, navigation and network permissions.
 - [ ] TASK-013 Configure application ID, signing strategy, versionCode/versionName.

@@ -2,7 +2,41 @@
 
 Scope: controlled manual API gate on OnePlus. No rules engine, history database, worker or finished UI.
 The user has reported OAuth + `/me` 200 in TASK-002A; wrong-account/device recovery cases remain
-separate manual evidence. No API gate is marked passed without actual-device observations.
+separate manual evidence. TASK-004 is **PASS — user-reported** on 2026-11-04; this is operator
+signoff for the smoke test, not independently captured endpoint evidence or full release acceptance.
+
+## TASK-005 — Recorded device outcome (2026-11-04)
+
+The user first reported that the check passed after changing the playlist to private in Spotify,
+then explicitly confirmed: “qua task 004 này rồi nhé, tiếp task sau”. Accept TASK-004 as completed
+on that basis; no further rerun of the same smoke-test steps is requested by this documentation task.
+
+| Evidence | Recorded result | Limits |
+|---|---|---|
+| TASK-004 manual smoke test | PASS — user-reported | Overall task signoff; individual endpoint statuses/counts were not supplied in this exchange |
+| Playlist privacy check | User reports success after manually making the playlist private in Spotify | Does not prove that the original API creation returned a private playlist |
+| Build/device association | Not supplied with the signoff | Repository baseline is commit `8eaaceb`, APK `0.3.0-api-spike`; installed checksum, exact device/OS version and test time are not confirmed |
+| Diagnostic/recovery cases | No individual results supplied | Do not infer timeout, cancellation, offline, 403/429 or external-removal device PASS from overall task signoff |
+
+**Privacy observation / unresolved deviation:** the successful reported flow required a manual
+privacy change in Spotify. The probe already requests `public:false` and rejects metadata unless
+`public:false` and `collaborative:false` under the expected owner. It is unknown whether the tested
+playlist was newly API-created or an existing linked playlist; there is no captured creation response.
+Do not conclude that Spotify ignored the creation payload or relax BR-014/API-02. Automatic private
+creation still needs distinct evidence before that part of GATE-API-01 is marked verified.
+
+Gate disposition after this signoff:
+
+- **GATE-API-01:** TASK-004 accepted by the operator; endpoint-by-endpoint evidence and automatic
+  private-create behavior remain incomplete. No independently verified full-gate PASS is claimed.
+- **GATE-AUTH-01:** prior OAuth success is reported; the complete TASK-003 device checklist is not
+  individually signed off here.
+- **GATE-ACCOUNT-01:** prior `/me` success is reported; Premium and Developer App ownership are not
+  independently established by that response or this task signoff.
+
+TASK-005 completes the outcome/deviation record. M0 exit is not globally marked Verified from this
+summary alone. The next planned task is TASK-010: audit/reuse the existing pinned Android scaffold;
+broad production implementation remains subject to the M0 exit criteria.
 
 ## Binding smoke-test behavior
 
@@ -64,9 +98,13 @@ completed with `BUILD SUCCESSFUL`. **84 JVM tests** passed (61 auth-core + 23 Vi
 errors or skips. Lint passed; dependency/target upgrade notices remain informational as already documented.
 APK versionCode 3 / `0.3.0-api-spike`; debug signature verified with `apksigner`.
 Local APK SHA-256: `7348ecbbc8b92dc0636b5361218b315c3a017942ca5980f303837ca710c93d6a`.
-Remote CI evidence belongs to the TASK-004 commit's GitHub Actions run; live Spotify checks remain pending.
+Remote CI evidence belongs to the TASK-004 commit's GitHub Actions run. TASK-005 changes documentation
+only and does not rerun or reverify that CI/build; device signoff and its limits are recorded above.
 
-## Device checklist (pending)
+## Device checklist (reference; task signed off by user)
+
+TASK-004 has overall user signoff as recorded above. The steps below remain the test procedure;
+they are not a claim that every recovery/error case has individually observed device evidence.
 
 1. Install current debug APK; enter Client ID and expected owner user ID; connect.
 2. Confirm `/me` identity and required immutable ID, then read Recent. Record status/counts, not event history.
