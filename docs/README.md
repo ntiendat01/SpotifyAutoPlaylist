@@ -41,6 +41,12 @@ Spotify AutoPlaylist is a personal, non-commercial Android application. It obser
 **GATE-AUTH-01:** Prove the loopback OAuth redirect works on OnePlus/OxygenOS, with exact registered URI, before building the full UI. If blocked, adopt a verified HTTPS Android App Link under a domain the developer controls; do not silently switch to an unapproved custom scheme.
 
 ## Traceability and change control
+
+Current implementation: TASK-003 OAuth spike has source, 32 passing local JVM tests, passing lint,
+and a built debug APK. See [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md) for evidence and the pending OnePlus checklist.
+GitHub Actions workflow is prepared; no remote CI or live Spotify/device gate pass is claimed.
+Document status remains Baseline until integration gates are verified.
+
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.
 - Document status: `Baseline` (this version), `Verified` (after gates), `Implemented`, `Released`.

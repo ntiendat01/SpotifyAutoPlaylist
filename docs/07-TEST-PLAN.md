@@ -9,6 +9,9 @@ Version 1.1.0 · Status: Baseline
 - **E2E:** OnePlus Ace 5 / OxygenOS 16 with real Premium Spotify test account, actual private playlist and signed APK.
 - Keep real tokens out of fixtures and CI. Do not rely on live Spotify in automated CI.
 
+TASK-003 automated coverage and pending device checklist: [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md).
+Prototype tests do not mark live OAuth/account/API gates as passed.
+
 ## 2. Core cases
 | ID | Type | Scenario | Expected |
 |---|---|---|---|

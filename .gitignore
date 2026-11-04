@@ -33,3 +33,10 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Local Spotify configuration and private integration evidence
+.env
+.env.*
+!.env.example
+spotify.local.properties
+evidence/private/
