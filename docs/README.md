@@ -114,6 +114,9 @@ before M3/M4 for device inspection. Native Replay components/four-tab preview, p
 and confirmed create/link setup are implemented; verification status and limitations are recorded in
 [M5-UI-FOUNDATION-ONBOARDING.md](M5-UI-FOUNDATION-ONBOARDING.md). Full feature screens, history,
 qualification, membership/outbox and background sync remain open. This does not mark M5 Released.
+Local checks and [CI run 41884304800](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41884304800)
+passed: 179 tests, lint and APK assembly. Downloaded APK/source SHA/checksum/signature and uploaded
+reports were independently verified. Device acceptance remains open (no ADB device attached).
 
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.

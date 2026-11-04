@@ -1,6 +1,6 @@
 # TASK-050A / TASK-050B — early device checkpoint
 
-Date: 2026-11-05 (Vietnam). Status: **implemented; local tests/build PASS; CI pending; device acceptance open**.
+Date: 2026-11-05 (Vietnam). Status: **implemented; local + CI automated checks PASS; device acceptance open**.
 
 User requested 050A then 050B before M3/M4. These are sub-tasks of TASK-050, not all of M5.
 
@@ -81,7 +81,9 @@ Debug APK: `io.github.ntiendat01.replay.debug`, `0.5.0-debug` / 500, min SDK 29.
 `apksigner verify --verbose` observed a valid v2 signature (one signer). Local SHA-256:
 `a8429b96c207c460f56d34e553341bed369ddba5bc43002cec901f3f42051314`.
 This local APK differs from the CI-signed artifact; do not use this hash for CI downloads.
-CI evidence will be appended after observation.
+Locally signed release APK also verifies (v3, owner certificate SHA-256 starts `67188893`, matching
+TASK-013). SHA-256 `6a2df585b8080caa0616c42aecfa9e3e08c3ec7484d51515fa2ec7f36ac2c98c`.
+No install/update acceptance or TASK-054 completion is implied.
 Robolectric native View renders were inspected for Welcome, Setup, empty Home, 320dp/font 1.3 and
 landscape Setup. These are synthetic screen states, not OnePlus screenshots. CI uploads these renders
 under the existing test-report artifact; no account or real listening history is rendered.
@@ -90,6 +92,27 @@ Verification found and fixed browser-launch failure propagation through a child 
 now acknowledges success/failure as a boolean; an unavailable browser yields a recoverable Welcome
 error instead of an uncaught parent cancellation. UI queries distinguish tab semantics from same-name
 headings. PixelCopy screenshot capture was replaced with native View drawing for Robolectric.
+
+### GitHub Actions and independently downloaded artifacts
+
+[Run 41884304800](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41884304800),
+implementation commit `54b46aeb579be4fd752ff990fba8dcc3de3fb8b8` on `codex/task-050ab-ui`: **success**.
+Job ran 01:09–01:18 on 2026-11-05 Vietnam time. Tests/lint/debug+release assembly, committed Room
+schema check, signature verification and both artifact uploads passed. The branch is not merged to Dev/main.
+
+- [Debug APK artifact](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41884304800/artifacts/13350608431),
+  `replay-auth-spike-debug-apk` (existing artifact name retained), 12,551,462-byte archive.
+- [Reports + native UI renders](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41884304800/artifacts/13350628308),
+  `auth-spike-test-reports`, 612,082-byte archive. Access requires repo read permission; retention 14 days.
+- Downloaded APK checksum independently passed `shasum -a 256 -c`; SHA-256:
+  `f1d98bd3059f666071baec34ed5d78a2a57ce863e3ddddaba5942b68113e39a9`.
+  Packaged source SHA matches the implementation commit. Metadata confirms `.debug`, `0.5.0-debug`,
+  versionCode 500, min SDK 29; downloaded signature independently verifies v2 with one signer.
+- Uploaded JUnit XML independently parsed: **179 tests, 0 failures/errors/skips** (92 auth, 23 API,
+  11 data, 53 app). Lint XML: data 0 issues; app 21 informational hints, 0 warnings/errors.
+  All five expected account-free PNG renders were downloaded; CI Welcome was visually inspected.
+- Existing workflow annotations are non-blocking: pinned Node 20 actions run under Node 24,
+  setup-java v4 deprecation and ubuntu-latest image migration. Action upgrades remain separate maintenance.
 
 ## Modified files
 
