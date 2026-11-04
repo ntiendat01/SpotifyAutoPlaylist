@@ -1,6 +1,8 @@
 # TASK-003 — OAuth PKCE / OnePlus feasibility spike
 
 Status: code implemented; local tests/lint/debug build **PASS**; device/live verification **pending**.
+This page records the original TASK-003 OAuth-only implementation. The current APK extends it
+with [TASK-002A identity verification](M0-ACCOUNT-SPIKE.md); current scope/behavior is described there.
 Scope: TASK-003, with minimal Android build/CI prerequisites required to run it.
 This does not complete M1 or implement TASK-020 production authentication.
 
@@ -15,7 +17,8 @@ This does not complete M1 or implement TASK-020 production authentication.
 - Validate HTTP 200, token shape/type, positive expiry and all three required scopes.
 - Sensitive values stay in memory; tokens discarded immediately. No raw exception/body/URL logging.
 - No profile/history calls or playlist actions. `GET /me` belongs to TASK-002A next; playlist smoke tests
-  belong to TASK-004. OAuth success alone leaves all integration gates unverified.
+  belong to TASK-004. (This describes the original TASK-003 baseline; `/me` is now implemented in
+  TASK-002A.) OAuth success alone leaves all integration gates unverified.
 
 Spike-only deviations: Client ID entered in diagnostic UI rather than build configuration;
 token persistence/refresh deferred to TASK-020. These choices do not change production requirements.

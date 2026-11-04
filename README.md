@@ -1,13 +1,14 @@
 # Spotify AutoPlaylist · replay.
 
 Personal Android companion that will collect repeat-play tracks into a real private Spotify playlist.
-Requirements: [docs/README.md](docs/README.md). Current scope: **TASK-003 OAuth feasibility spike**.
+Requirements: [docs/README.md](docs/README.md). Current scope: **TASK-003 OAuth + TASK-002A identity spike**.
 
 This test harness opens browser authorization, receives a loopback callback, validates PKCE/state,
-and exchanges the one-time code. It validates response shape/scopes, then discards all tokens.
+and exchanges the one-time code. It validates response shape/scopes, calls `GET /v1/me`, compares
+the returned `id` to a separately entered expected developer-owner user ID, then discards the token.
 No tokens, codes or raw HTTP bodies are logged, displayed or persisted. No client secret is used.
-History/profile calls, playlist writes, persistent login and workers are not implemented yet.
-OAuth success does **not** prove Premium, account identity/ownership or playlist endpoint access.
+History calls, playlist writes, persistent login and workers are not implemented yet.
+Matching `/me.id` does **not** prove Premium, Developer App ownership or playlist endpoint access.
 
 ## Try on OnePlus
 
@@ -16,14 +17,20 @@ OAuth success does **not** prove Premium, account identity/ownership or playlist
 2. Build the APK below, or download `replay-auth-spike-debug-apk` from a successful GitHub Actions run.
 3. Install `app-debug.apk`, open **replay. · Auth thử nghiệm**, and enter the app's public **Client ID**.
    Never enter Client Secret. Client ID is runtime-only in this spike, not saved or built into the APK.
-4. Tap **Kết nối Spotify**, complete login/consent in the browser, then manually return to replay.
-5. Record only the safe outcome/HTTP status using [the M0 checklist](docs/M0-AUTH-SPIKE.md).
+4. Enter the **Spotify user ID of the Developer App owner**, independently obtained from that account's
+   profile link (`/user/<id>`, excluding query parameters) or username on the account page. This is not
+   display name, email, Client ID, full profile URL or `account_id`. The field is masked and memory-only.
+5. Tap **Kết nối Spotify**, complete login/consent in the browser, then manually return to replay.
+   Only OAuth 200 **and** `/me` 200 **and** exact expected-ID match produce success. Wrong account is rejected.
+6. Record only safe outcome/status using [the identity checklist](docs/M0-ACCOUNT-SPIKE.md).
    Never copy callback URLs or capture the browser address bar: it can contain an authorization code.
-6. Test deny, cancel, retry, rotation, timeout, port collision and process death on the real device.
+7. Test wrong account, deny, cancel, retry, rotation, timeout, port collision and process death on device.
 
 Callback waits at most three minutes. Closing the browser cannot be detected automatically;
 return and tap **Hủy đăng nhập**, or wait for timeout. Process death loses the attempt: start a new login.
 This separate application ID is `com.spotifyautoplaylist.spike`. No account/token data is saved.
+Version: `0.2.0-account-spike` (versionCode 2). A different debug signing key may require removing
+the previous disposable probe before installation. There is no persisted history in this probe.
 Screen capture/recent-task snapshots are blocked in this spike; product visual QA is a later task.
 
 ## Pinned toolchain
@@ -67,7 +74,7 @@ Device/live integration gates cannot be replaced by CI tests.
 
 ## Code boundaries
 
-- `auth-core/`: Android-independent PKCE, bounded loopback listener, cancellable token probe;
+- `auth-core/`: Android-independent PKCE, bounded loopback listener, cancellable token/profile probes;
   JVM tests using dummy data, localhost sockets and MockWebServer.
 - `app/`: native Compose diagnostic screen, lifecycle-aware browser launch and ViewModel.
 - `.github/workflows/android-ci.yml`: JVM/Android unit tests, lint and debug APK.

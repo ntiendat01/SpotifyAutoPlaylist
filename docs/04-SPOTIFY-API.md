@@ -15,6 +15,14 @@ Version 1.1.0 · Status: **Implementation requires live API smoke tests**
 4. No automatic migration of likes, history, playlists or counts from the old Spotify account. If a developer recreates a Spotify app, old `client_id`, refresh tokens, and registered redirects are not assumed portable.
 
 ## 2. OAuth Authorization Code + PKCE
+
+TASK-002A's M0 identity probe uses a separately entered expected owner `id`, compares it exactly to
+`GET /me.id`, and releases the memory-only token on match, mismatch, cancellation or error.
+It cannot infer Developer App ownership or Premium from a successful `/me` response.
+Current Spotify docs recommend immutable `account_id` for **persistent** account linking; reconcile
+this with the database/account-isolation contract before M2. M0 performs no persistent linking and
+does not silently substitute `account_id` for the configured user ID. See [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md).
+
 - Authorization URL `https://accounts.spotify.com/authorize`.
 - `response_type=code`, `client_id`, `redirect_uri`, `scope`, random `state`, `code_challenge_method=S256`, `code_challenge=BASE64URL(SHA256(verifier))`.
 - Verifier: secure random, 43–128 chars. Check exact state match, one-time code, callback URI and timeout.

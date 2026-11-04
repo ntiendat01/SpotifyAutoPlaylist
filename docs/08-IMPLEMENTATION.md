@@ -8,6 +8,7 @@ Version 1.3.0 · Status: Baseline
 - [ ] TASK-001 Create private GitHub repo; set README, `.gitignore`, license decision.
 - [ ] TASK-002 Register a NEW Spotify Developer App from the NEW Premium account (not the old client ID); record new client ID, allowed account and scopes. Confirm account is both app owner and intended listener (AUTH-006).
 - [ ] TASK-002A OAuth then call `GET /me`; verify user ID matches the expected new developer-owner account (GATE-ACCOUNT-01). Record sanitized proof.
+  - Code and tests: [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md). Live identity match and ownership evidence pending.
 - [ ] TASK-003 Prototype OAuth PKCE + loopback callback on physical OnePlus; test login, cancellation and port collision.
   - Spike source, tests and minimal Android/CI harness: [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md). Device gate pending; M1 and production auth remain separate.
 - [ ] TASK-004 Smoke-test Recently Played and private playlist create/read/add endpoints; sanitize results.

@@ -15,7 +15,13 @@ class TokenProbeTest {
     @Test fun `exchange sends verifier and exact redirect without secret then returns safe metadata`() = runBlocking {
         MockWebServer().use { server ->
             server.enqueue(MockResponse().setBody(validBody()))
-            val result = probe(server).verify(input)
+            val grant = probe(server).verify(input)
+            val result = grant.use {
+                assertEquals("dummy-access-token", it.requireAccessToken())
+                assertFalse(it.toString().contains("dummy-access-token"))
+                it.metadata
+            }
+            assertTrue(grant.isClosed)
             assertEquals(200, result.httpStatus)
             assertEquals(SpotifyAuth.scopes, result.scopes)
             val request = server.takeRequest(3, TimeUnit.SECONDS)!!
@@ -57,6 +63,7 @@ class TokenProbeTest {
     @Test fun `malformed token responses are sanitized`() = runBlocking {
         for (body in listOf("not-json", "{}", "[]", validBody().replace("Bearer", "Unknown"),
             validBody().replace("3600", "0"), validBody().replace("dummy-access-token", ""),
+            validBody().replace("dummy-access-token", "invalid token"),
             validBody().replace("\"dummy-access-token\"", "null"), "x".repeat(65_537))) {
             MockWebServer().use { server ->
                 server.enqueue(MockResponse().setBody(body))

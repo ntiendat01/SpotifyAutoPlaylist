@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -81,7 +82,7 @@ class MainActivity : ComponentActivity() {
             }
             BackHandler(enabled = state.busy) { model.cancel() }
             ReplayProbeTheme {
-                AuthProbeScreen(state, model::editClientId, model::start, { model.cancel() })
+                AuthProbeScreen(state, model::editClientId, model::editExpectedOwnerId, model::start, { model.cancel() })
             }
         }
     }
@@ -105,6 +106,7 @@ private fun ReplayProbeTheme(content: @Composable () -> Unit) {
 internal fun AuthProbeScreen(
     state: ProbeUiState,
     onClientIdChanged: (String) -> Unit,
+    onOwnerIdChanged: (String) -> Unit,
     onConnect: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -120,7 +122,7 @@ internal fun AuthProbeScreen(
                 style = MaterialTheme.typography.labelLarge)
             Text("Nhạc bạn nghe lại.\nPlaylist tự tạo.", fontSize = 28.sp,
                 lineHeight = 36.sp, fontWeight = FontWeight.SemiBold)
-            Text("Bước đầu: kiểm tra đăng nhập Spotify trên điện thoại này.",
+            Text("Xác minh tài khoản Spotify đã tạo Developer App.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -141,6 +143,15 @@ internal fun AuthProbeScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false),
                 isError = state.failure == ProbeFailure.INVALID_CLIENT_ID,
             )
+            OutlinedTextField(
+                value = state.expectedOwnerId, onValueChange = onOwnerIdChanged,
+                modifier = Modifier.fillMaxWidth(), enabled = !state.busy, singleLine = true,
+                label = { Text("Spotify user ID của chủ Developer App") },
+                supportingText = { Text("Lấy phần sau /user/ trong link hồ sơ của tài khoản chủ app, bỏ ?si=…; hoặc username trong trang tài khoản. Không dùng tên hiển thị, email hoặc Client ID.") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
+                isError = state.failure == ProbeFailure.INVALID_OWNER_ID,
+            )
             Button(onClick = onConnect, enabled = !state.busy,
                 modifier = Modifier.fillMaxWidth().height(56.dp)) {
                 Text(if (state.phase == ProbePhase.IDLE) "Kết nối Spotify" else "Thử lại kết nối")
@@ -156,12 +167,16 @@ internal fun AuthProbeScreen(
                 Text(statusText(state), color = if (state.phase == ProbePhase.FAILED)
                     MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
                 state.result?.let { result ->
-                    Text("HTTP ${result.httpStatus} · Đã cấp ${result.scopes.size} quyền yêu cầu.")
-                    Text("Callback và trao đổi token thành công. Chưa xác minh tài khoản, Premium hay quyền API playlist.")
+                    Text("OAuth HTTP ${result.httpStatus} · Đã xác nhận đủ ${SpotifyAuth.scopes.size} quyền yêu cầu.")
                 }
+                state.account?.let { account ->
+                    Text("GET /me HTTP ${account.httpStatus} · ID ${account.maskedUserId} khớp ID đã nhập.")
+                    Text("Chỉ xác minh danh tính. Premium, quyền sở hữu Developer App và playlist vẫn cần bằng chứng riêng.")
+                }
+                state.retryAfterSeconds?.let { Text("Chờ khoảng $it giây trước khi thử lại. Không tự gửi lại yêu cầu.") }
             }
             Spacer(Modifier.height(8.dp))
-            Text("Bản thử chỉ kiểm tra OAuth. Chưa đọc lịch sử, chưa tạo hoặc sửa playlist. Token không được lưu; mở lại ứng dụng cần đăng nhập lại.",
+            Text("Bản thử kiểm tra OAuth và tài khoản qua /me. Chưa đọc lịch sử, chưa tạo hoặc sửa playlist. Token chỉ dùng cho lần xác minh rồi bị bỏ; không lưu phiên đăng nhập.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             Text("Ứng dụng cá nhân độc lập, không phải ứng dụng chính thức của Spotify.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
@@ -174,7 +189,8 @@ private fun statusText(state: ProbeUiState): String = when (state.phase) {
     ProbePhase.STARTING -> "Đang chuẩn bị kết nối…"
     ProbePhase.WAITING -> "Đang chờ đăng nhập trong trình duyệt (tối đa 3 phút). Sau đó quay lại replay. Nếu đã đóng trình duyệt, chọn Hủy."
     ProbePhase.EXCHANGING -> "Đã nhận callback hợp lệ. Đang kiểm tra trao đổi token…"
-    ProbePhase.SUCCEEDED -> "Đã hoàn tất thử nghiệm OAuth trên phiên này."
+    ProbePhase.VERIFYING_ACCOUNT -> "Đang xác minh tài khoản qua Spotify /me…"
+    ProbePhase.SUCCEEDED -> "Danh tính Spotify khớp tài khoản đã thiết lập."
     ProbePhase.FAILED -> when (state.failure) {
         ProbeFailure.INVALID_CLIENT_ID -> "Client ID phải gồm đúng 32 ký tự hex."
         ProbeFailure.PORT_IN_USE -> "Cổng 8765 đang được sử dụng. Đóng phiên đăng nhập khác rồi thử lại."
@@ -183,9 +199,21 @@ private fun statusText(state: ProbeUiState): String = when (state.phase) {
         ProbeFailure.AUTHORIZATION_DENIED -> "Bạn đã từ chối cấp quyền Spotify. Có thể thử lại."
         ProbeFailure.AUTHORIZATION_FAILED -> "Spotify không chấp nhận đăng nhập. Kiểm tra cấu hình Developer App."
         ProbeFailure.BROWSER_UNAVAILABLE -> "Không mở được trình duyệt. Kiểm tra trình duyệt mặc định rồi thử lại."
-        ProbeFailure.TOKEN_HTTP -> "Spotify từ chối trao đổi token (HTTP ${state.httpStatus}). Kiểm tra Client ID và redirect URI trước khi thử lại."
+        ProbeFailure.TOKEN_HTTP -> if (state.httpStatus == 429)
+            "Spotify đang giới hạn trao đổi token. Tạm dừng và thử lại sau thời gian chờ."
+            else "Spotify từ chối trao đổi token (HTTP ${state.httpStatus}). Kiểm tra Client ID và redirect URI trước khi thử lại."
         ProbeFailure.TOKEN_RESPONSE -> "Phản hồi token không đúng cấu trúc mong đợi. Chưa xác nhận thành công."
         ProbeFailure.INSUFFICIENT_SCOPE -> "Spotify chưa cấp đủ ba quyền yêu cầu. Kiểm tra cấu hình Developer App."
+        ProbeFailure.INVALID_OWNER_ID -> "Hãy nhập Spotify user ID của tài khoản đã tạo Developer App trước khi đăng nhập."
+        ProbeFailure.ACCOUNT_MISMATCH -> "Tài khoản Spotify không khớp. Đã từ chối phiên này. Đăng xuất Spotify trong trình duyệt rồi kết nối lại đúng tài khoản; không thay ID để bỏ qua kiểm tra."
+        ProbeFailure.PROFILE_RESPONSE -> "Spotify /me không trả về ID hợp lệ. Chưa xác minh tài khoản."
+        ProbeFailure.PROFILE_HTTP -> when (state.httpStatus) {
+            401 -> "Phiên Spotify không còn hợp lệ. Hãy đăng nhập lại."
+            403 -> "Spotify không cho phép đọc /me. Kiểm tra tài khoản và quyền truy cập Developer App."
+            429 -> "Spotify đang giới hạn yêu cầu. Tạm dừng kiểm tra và thử lại sau thời gian chờ."
+            else -> "Không xác minh được tài khoản qua /me (HTTP ${state.httpStatus}). Chưa cho phép tiếp tục."
+        }
+        ProbeFailure.SESSION_EXPIRED -> "Phiên xác minh đã kết thúc. Hãy đăng nhập lại."
         else -> "Không kết nối được. Kiểm tra mạng rồi thử lại."
     }
 }

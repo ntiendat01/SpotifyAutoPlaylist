@@ -10,8 +10,14 @@ import com.spotifyautoplaylist.auth.SpotifyAuth
 import com.spotifyautoplaylist.auth.TokenExchange
 import com.spotifyautoplaylist.auth.TokenExchangeInput
 import com.spotifyautoplaylist.auth.TokenProbeResult
+import com.spotifyautoplaylist.auth.TokenGrant
+import com.spotifyautoplaylist.auth.AccountProbeResult
+import com.spotifyautoplaylist.auth.AccountVerification
 import java.net.URLDecoder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
@@ -47,13 +53,13 @@ class AuthProbeViewModelTest {
         assertEquals(ProbeFailure.INVALID_CLIENT_ID, model.state.value.failure)
     }
 
-    @Test fun `double tap shares one listener and successful token exchange is not account verification`() = runTest(dispatcher) {
+    @Test fun `double tap shares one listener and success requires owner verification`() = runTest(dispatcher) {
         var binds = 0
         var exchanges = 0
         val listener = FakeListener()
         val model = model(factory = { binds++; listener }, exchange = TokenExchange {
             exchanges++
-            TokenProbeResult(200, SpotifyAuth.scopes, 3600)
+            dummyGrant()
         })
         val browser = backgroundScope.async { model.browserRequests.first() }
         model.editClientId(dummyId)
@@ -67,6 +73,7 @@ class AuthProbeViewModelTest {
         assertTrue(listener.closed)
         assertEquals(ProbePhase.SUCCEEDED, model.state.value.phase)
         assertEquals(200, model.state.value.result?.httpStatus)
+        assertEquals(200, model.state.value.account?.httpStatus)
     }
 
     @Test fun `port collision does not open browser or exchange code`() = runTest(dispatcher) {
@@ -157,10 +164,185 @@ class AuthProbeViewModelTest {
         assertTrue(listener.closed)
     }
 
+    @Test fun `missing owner id fails before browser listener or token request`() = runTest(dispatcher) {
+        var binds = 0
+        val model = model(factory = { binds++; FakeListener() })
+        model.editClientId(dummyId)
+        model.editExpectedOwnerId("")
+        model.start()
+        advanceUntilIdle()
+        assertEquals(ProbeFailure.INVALID_OWNER_ID, model.state.value.failure)
+        assertEquals(0, binds)
+    }
+
+    @Test fun `wrong owner never becomes success and discards credentials`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        val model = model(exchange = TokenExchange { grant }, accounts = AccountVerification { _, expected ->
+            assertEquals("dummy-owner", expected)
+            throw ProbeException(ProbeFailure.ACCOUNT_MISMATCH, 200)
+        })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertEquals(ProbePhase.FAILED, model.state.value.phase)
+        assertEquals(ProbeFailure.ACCOUNT_MISMATCH, model.state.value.failure)
+        assertNull(model.state.value.result)
+        assertNull(model.state.value.account)
+        assertTrue(grant.isClosed)
+    }
+
+    @Test fun `matching owner is checked only after OAuth and returned id is masked`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        var checks = 0
+        val model = model(exchange = TokenExchange { grant }, accounts = AccountVerification { received, expected ->
+            assertSame(grant, received)
+            assertFalse(grant.isClosed)
+            assertEquals("dummy-owner", expected)
+            checks++
+            AccountProbeResult(200, "••••wner")
+        })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertEquals(1, checks)
+        assertEquals("••••wner", model.state.value.account?.maskedUserId)
+        assertEquals(ProbePhase.SUCCEEDED, model.state.value.phase)
+        assertTrue(grant.isClosed)
+        assertFalse(model.state.value.toString().contains("dummy-owner"))
+    }
+
+    @Test fun `token rejection cannot call me`() = runTest(dispatcher) {
+        val model = model(exchange = TokenExchange { throw ProbeException(ProbeFailure.TOKEN_HTTP, 400) },
+            accounts = AccountVerification { _, _ -> throw AssertionError("Must not call profile") })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertEquals(ProbeFailure.TOKEN_HTTP, model.state.value.failure)
+        assertNull(model.state.value.account)
+    }
+
+    @Test fun `cancel during profile closes grant and cannot later show success`() = runTest(dispatcher) {
+        val grant = dummyGrant()
+        var profileCancelled = false
+        val model = model(exchange = TokenExchange { grant }, accounts = AccountVerification { _, _ ->
+            try { awaitCancellation() } finally { profileCancelled = true }
+        })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertEquals(ProbePhase.VERIFYING_ACCOUNT, model.state.value.phase)
+        model.editExpectedOwnerId("other-owner")
+        assertEquals("dummy-owner", model.state.value.expectedOwnerId) // frozen while active
+        model.cancel()
+        advanceUntilIdle()
+        assertTrue(profileCancelled)
+        assertTrue(grant.isClosed)
+        assertEquals(ProbeFailure.CANCELLED, model.state.value.failure)
+        assertNull(model.state.value.account)
+    }
+
+    @Test fun `editing owner or client invalidates previous verified result`() = runTest(dispatcher) {
+        val model = model()
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertNotNull(model.state.value.account)
+        model.editExpectedOwnerId("other-owner")
+        assertEquals(ProbePhase.IDLE, model.state.value.phase)
+        assertNull(model.state.value.result)
+        assertNull(model.state.value.account)
+        model.editClientId("f".repeat(32))
+        assertEquals("other-owner", model.state.value.expectedOwnerId)
+        assertNull(model.state.value.account)
+    }
+
+    @Test fun `profile failure keeps no authenticated UI result`() = runTest(dispatcher) {
+        for (status in listOf(401, 403, 500)) {
+            val grant = dummyGrant()
+            val model = model(exchange = TokenExchange { grant }, accounts = AccountVerification { _, _ ->
+                throw ProbeException(ProbeFailure.PROFILE_HTTP, status)
+            })
+            backgroundScope.async { model.browserRequests.first() }
+            model.editClientId(dummyId)
+            model.start()
+            runCurrent()
+            assertEquals(status, model.state.value.httpStatus)
+            assertEquals(ProbePhase.FAILED, model.state.value.phase)
+            assertNull(model.state.value.result)
+            assertTrue(grant.isClosed)
+        }
+    }
+
+    @Test fun `429 prevents another login or profile request until retry after elapsed`() = runTest(dispatcher) {
+        var now = 0L
+        var binds = 0
+        var checks = 0
+        val model = model(factory = { binds++; FakeListener() }, nanoTime = { now },
+            accounts = AccountVerification { _, _ ->
+                checks++
+                if (checks == 1) throw ProbeException(ProbeFailure.PROFILE_HTTP, 429, 45)
+                AccountProbeResult(200, "••••wner")
+            })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertEquals(429, model.state.value.httpStatus)
+        model.start()
+        runCurrent()
+        assertEquals(1, checks)
+        assertEquals(1, binds)
+        assertEquals(45L, model.state.value.retryAfterSeconds)
+        now = 45_000_000_000
+        backgroundScope.async { model.browserRequests.first() }
+        model.start()
+        runCurrent()
+        assertEquals(2, checks)
+        assertEquals(ProbePhase.SUCCEEDED, model.state.value.phase)
+    }
+
+    @Test fun `late profile from canceled attempt cannot overwrite a fresh verified result`() = runTest(dispatcher) {
+        val lateResult = CompletableDeferred<AccountProbeResult>()
+        val grants = mutableListOf<TokenGrant>()
+        var checks = 0
+        val model = model(exchange = TokenExchange { dummyGrant().also(grants::add) },
+            accounts = AccountVerification { _, _ ->
+                checks++
+                if (checks == 1) withContext(NonCancellable) { lateResult.await() }
+                else AccountProbeResult(200, "••••new")
+            })
+        backgroundScope.async { model.browserRequests.first() }
+        model.editClientId(dummyId)
+        model.start()
+        runCurrent()
+        assertEquals(ProbePhase.VERIFYING_ACCOUNT, model.state.value.phase)
+        model.cancel()
+        backgroundScope.async { model.browserRequests.first() }
+        model.start()
+        runCurrent()
+        assertEquals("••••new", model.state.value.account?.maskedUserId)
+        lateResult.complete(AccountProbeResult(200, "••••old"))
+        runCurrent()
+        assertEquals("••••new", model.state.value.account?.maskedUserId)
+        assertTrue(grants.all(TokenGrant::isClosed))
+    }
+
     private fun model(
         factory: () -> CallbackListener = { FakeListener() },
-        exchange: TokenExchange = TokenExchange { TokenProbeResult(200, SpotifyAuth.scopes, 3600) },
-    ) = AuthProbeViewModel(factory, exchange, dispatcher).also { store.put("probe", it) }
+        exchange: TokenExchange = TokenExchange { dummyGrant() },
+        accounts: AccountVerification = AccountVerification { _, id -> AccountProbeResult(200, "••••${id.takeLast(4)}") },
+        nanoTime: () -> Long = System::nanoTime,
+    ) = AuthProbeViewModel(factory, exchange, dispatcher, accounts, nanoTime).also {
+        store.put("probe", it)
+        it.editExpectedOwnerId("dummy-owner")
+    }
+
+    private fun dummyGrant() = TokenGrant(TokenProbeResult(200, SpotifyAuth.scopes, 3600), "dummy-access-token")
 
     private class FakeListener(private val failure: ProbeFailure? = null) : CallbackListener {
         var closed = false

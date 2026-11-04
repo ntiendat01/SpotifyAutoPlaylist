@@ -12,6 +12,9 @@ Version 1.1.0 · Status: Baseline
 TASK-003 automated coverage and pending device checklist: [M0-AUTH-SPIKE.md](M0-AUTH-SPIKE.md).
 Prototype tests do not mark live OAuth/account/API gates as passed.
 
+TASK-002A/TC-032 profile verification coverage and device checklist: [M0-ACCOUNT-SPIKE.md](M0-ACCOUNT-SPIKE.md).
+No actual account IDs or tokens in fixtures. TC-031/034's owned-playlist E2E portions remain outside this probe.
+
 ## 2. Core cases
 | ID | Type | Scenario | Expected |
 |---|---|---|---|
