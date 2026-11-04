@@ -61,6 +61,7 @@ Screen capture/recent-task snapshots are blocked in this spike; product visual Q
 | Coroutines | 1.10.2 |
 | OkHttp | 4.12.0 |
 | Kotlin serialization JSON | 1.9.0 |
+| Retrofit | 3.0.0 |
 | Room / KSP | 2.8.5 / 2.2.21-2.0.5 |
 | DataStore Preferences | 1.2.1 |
 | Robolectric (tests; runs SDK 34) | 4.16.1 |
@@ -86,7 +87,7 @@ Install JDK 17 and Android SDK command-line tools, accept SDK licenses, then ins
 (or SDK path in ignored `local.properties`).
 
 ```sh
-./gradlew --no-daemon :auth-core:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./gradlew --no-daemon :auth-core:test :spotify-api:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 The first `:data` test run downloads Robolectric's Android runtime jar.
@@ -105,6 +106,7 @@ Release: `./gradlew --no-daemon :app:assembleRelease` signs with the owner key f
 `app/build/outputs/apk/release/app-release.apk`; without a key it writes an unsigned, non-installable APK.
 Never commit key material. Details and certificate fingerprint: [signing report](docs/M1-ANDROID-SIGNING.md).
 JVM HTML reports: `auth-core/build/reports/tests/test/index.html`,
+`spotify-api/build/reports/tests/test/index.html`,
 `data/build/reports/tests/testDebugUnitTest/index.html` and
 `app/build/reports/tests/testDebugUnitTest/index.html`.
 GitHub Actions runs the same checks and uploads APK/reports without Spotify credentials.
@@ -130,6 +132,8 @@ TASK-011 workflow/artifact evidence: [M1-ANDROID-CI.md](docs/M1-ANDROID-CI.md).
 
 - `auth-core/`: Android-independent PKCE, bounded loopback listener, token/profile/API probes and atomic recovery journal;
   JVM tests using dummy data, localhost sockets and MockWebServer.
+- `spotify-api/`: Retrofit Spotify Web API client, DTOs, HTTP status mapping and sanitized request events;
+  MockWebServer tests.
 - `data/`: Room v1 schema (exported to `data/schemas/`, must be committed), DAOs, account-scoped DataStore
   settings and local-data reset; Robolectric tests with in-memory Room.
 - `app/`: native Compose diagnostic screen, lifecycle-aware browser launch and ViewModel.

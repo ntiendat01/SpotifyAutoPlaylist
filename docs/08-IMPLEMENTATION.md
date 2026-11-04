@@ -69,7 +69,12 @@ Version 1.3.0 · Status: Baseline
     `LocalDataReset` registered as an account reset step. 126 JVM tests passed. No migrations yet (v1);
     Room's default corruption deletion still conflicts with 05 §4. See [M2-DATA.md](M2-DATA.md).
 - TASK-022 Implement Spotify Retrofit client with DTO tests, status handling, sanitized logs.
-  **Exit:** login persists safely, history schema tests pass.
+  - **PASS — 2026-11-05, JVM tests and local build.** `:spotify-api` module: Retrofit 3 service for
+    API-01..05/07, DTOs, §8 status mapping (single 401 refresh-retry, `Retry-After` fail-fast,
+    `QUOTA_EXCEEDED`, `outcomeUnknown` for ambiguous POSTs, no transparent retries/redirects) and
+    sanitized per-attempt log events. 149 JVM tests passed. Not exercised against live Spotify.
+    See [M2-SPOTIFY-API.md](M2-SPOTIFY-API.md).
+    **Exit:** login persists safely, history schema tests pass.
 
 ### M3 — History sync and rules
 

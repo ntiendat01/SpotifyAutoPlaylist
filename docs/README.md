@@ -102,7 +102,12 @@ Room v1 schema (exported to `data/schemas/`, CI checks it is committed), TX-01/T
 account-scoped DataStore settings and a local-data reset step for account change. 126 JVM tests passed;
 no UI wiring or device run. See [M2-DATA.md](M2-DATA.md).
 
-Next planned task: TASK-022, Spotify Retrofit client.
+**TASK-022: PASS — JVM tests and local build on 2026-11-05.** New `:spotify-api` module: Retrofit client
+for recently played and playlist endpoints, DTOs, HTTP status/429/quota mapping, one 401 refresh-retry,
+ambiguous POSTs flagged for remote verification, and logs limited to endpoint/status/duration.
+149 JVM tests passed; no live API call with this client yet. See [M2-SPOTIFY-API.md](M2-SPOTIFY-API.md).
+
+Next planned task: TASK-030, Recently Played pagination, watermark and gap detection.
 
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.

@@ -30,6 +30,10 @@ TX-01 rollback, TX-03 single outbox intention, per-account half-open counts, set
 isolation, and TC-033's Room/DataStore reset. Worker reset and sync-level cases remain open.
 See [M2-DATA.md](M2-DATA.md).
 
+TASK-022 MockWebServer coverage (dummy data): DTO parsing, 04 §8 status matrix, 401 refresh-retry,
+429/`QUOTA_EXCEEDED`, ambiguous POST flagged without re-send, sanitized logs. Client-level only; live 04 §9
+checks and sync/outbox E2E cases remain open. See [M2-SPOTIFY-API.md](M2-SPOTIFY-API.md).
+
 ## 2. Core cases
 | ID | Type | Scenario | Expected |
 |---|---|---|---|

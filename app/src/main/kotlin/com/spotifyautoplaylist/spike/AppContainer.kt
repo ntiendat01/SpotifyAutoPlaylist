@@ -1,9 +1,12 @@
 package com.spotifyautoplaylist.spike
 
 import android.content.Context
+import android.util.Log
 import com.spotifyautoplaylist.data.LocalDataReset
 import com.spotifyautoplaylist.data.local.ReplayDatabase
 import com.spotifyautoplaylist.data.settings.SettingsRepository
+import com.spotifyautoplaylist.spotify.SpotifyClient
+import com.spotifyautoplaylist.spotify.SpotifyHttpLogger
 import java.io.File
 
 /**
@@ -21,4 +24,10 @@ class AppContainer(context: Context) {
 
     /** Null when the build has no Spotify configuration. */
     val auth: AndroidAuth? by lazy { AndroidAuth.create(appContext, listOf(LocalDataReset(database, settings))) }
+
+    /** Null when the build has no Spotify configuration. Logs only sanitized events, and only in debug. */
+    val spotify: SpotifyClient? by lazy {
+        val logger = if (BuildConfig.DEBUG) SpotifyHttpLogger { Log.i("SpotifyApi", it.toString()) } else SpotifyHttpLogger.NONE
+        auth?.let { SpotifyClient.create(it.manager, logger) }
+    }
 }

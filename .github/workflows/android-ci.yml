@@ -32,7 +32,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4; includes wrapper validation
       - name: JVM tests, Android tests, lint and APK
         # CI has no release key yet: assembleRelease checks the release variant and emits an unsigned APK.
-        run: ./gradlew --no-daemon :auth-core:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
+        run: ./gradlew --no-daemon :auth-core:test :spotify-api:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
       - name: Room schema export is committed
         # A changed entity must ship with a version bump, migration and the newly exported schema.
         run: |
@@ -63,6 +63,8 @@ jobs:
           path: |
             auth-core/build/reports/tests/
             auth-core/build/test-results/test/TEST-*.xml
+            spotify-api/build/reports/tests/
+            spotify-api/build/test-results/test/TEST-*.xml
             data/build/reports/tests/
             data/build/test-results/testDebugUnitTest/TEST-*.xml
             data/build/reports/lint-results-debug.html

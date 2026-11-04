@@ -53,8 +53,21 @@ class AuthConfig private constructor(val clientId: String, val expectedOwnerId: 
     }
 }
 
-class AccessToken internal constructor(internal val value: String) {
+class AccessToken(internal val value: String) {
+    init { require(value.isNotBlank()) }
+
+    /** The only way to read the token: for the `Authorization` request header, never for logs. */
+    fun bearerHeader(): String = "Bearer $value"
+
     override fun toString() = "AccessToken(<redacted>)"
+}
+
+/** Source of bearer tokens for API clients; [SpotifyAuthManager] is the production implementation. */
+interface BearerTokenProvider {
+    suspend fun accessToken(): AccessToken
+
+    /** Called with the token an API rejected with 401; returns a token to retry with once. */
+    suspend fun onUnauthorized(rejected: AccessToken): AccessToken
 }
 
 /** Persisted grant bound to one Client ID and one verified Spotify identity. */

@@ -105,6 +105,9 @@ Do not hard-code illustrative cursor values; use returned cursors and test pagin
 | 429 otherwise | Respect `Retry-After` and backoff |
 | 5xx / timeout | Retry GET; POST enters `VERIFY_REMOTE` first |
 
+TASK-022 implements this matrix in `SpotifyClient` (`:spotify-api`); retries/backoff beyond the single 401
+refresh are caller policy, and ambiguous POST failures carry `outcomeUnknown`. See [M2-SPOTIFY-API.md](M2-SPOTIFY-API.md).
+
 ## 9. Live integration gate checklist
 - [ ] AUTH-006/GATE-ACCOUNT-01: new Spotify account has Premium, owns developer app, signs in through OAuth, and matches `GET /me` user ID.
 - [ ] A different Spotify user ID is rejected before reads/writes; the old account's playlist ID is never reused.

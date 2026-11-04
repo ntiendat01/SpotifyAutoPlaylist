@@ -183,6 +183,7 @@ com.google.testing.platform:launcher:0.0.9-alpha03=_internal-unified-test-platfo
 com.squareup.okhttp3:okhttp:4.12.0=debugRuntimeClasspath,debugUnitTestRuntimeClasspath,releaseRuntimeClasspath,releaseUnitTestRuntimeClasspath
 com.squareup.okio:okio-jvm:3.9.1=debugAndroidTestCompileClasspath,debugCompileClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath,releaseUnitTestCompileClasspath,releaseUnitTestRuntimeClasspath
 com.squareup.okio:okio:3.9.1=debugAndroidTestCompileClasspath,debugCompileClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,debugUnitTestRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath,releaseUnitTestCompileClasspath,releaseUnitTestRuntimeClasspath
+com.squareup.retrofit2:retrofit:3.0.0=debugRuntimeClasspath,debugUnitTestRuntimeClasspath,releaseRuntimeClasspath,releaseUnitTestRuntimeClasspath
 commons-io:commons-io:2.16.1=_internal-unified-test-platform-android-test-plugin-host-emulator-control
 io.github.java-diff-utils:java-diff-utils:4.12=kotlinInternalAbiValidation
 io.grpc:grpc-api:1.57.2=_internal-unified-test-platform-core

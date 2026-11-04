@@ -35,7 +35,7 @@ class SpotifyAuthManager(
     private val resetSteps: List<AccountResetStep> = emptyList(),
     private val now: () -> Long = System::currentTimeMillis,
     private val io: CoroutineDispatcher = Dispatchers.IO,
-) {
+) : BearerTokenProvider {
     private val mutex = Mutex()
     private var loaded = false
     private var current: StoredCredentials? = null
@@ -50,7 +50,7 @@ class SpotifyAuthManager(
     }
 
     /** Valid bearer token, refreshing first when it expires within [EXPIRY_MARGIN_MILLIS]. */
-    suspend fun accessToken(): AccessToken = mutex.withLock {
+    override suspend fun accessToken(): AccessToken = mutex.withLock {
         val credentials = activeLocked()
         if (credentials.expiresAtEpochMillis - now() > EXPIRY_MARGIN_MILLIS) AccessToken(credentials.accessToken)
         else AccessToken(refreshLocked(credentials).accessToken)
@@ -60,7 +60,7 @@ class SpotifyAuthManager(
      * Call once after an API 401 with the token that was rejected. Returns a newer token if another caller
      * already refreshed; otherwise refreshes once. A repeated 401 after that refresh signs out.
      */
-    suspend fun onUnauthorized(rejected: AccessToken): AccessToken = mutex.withLock {
+    override suspend fun onUnauthorized(rejected: AccessToken): AccessToken = mutex.withLock {
         val credentials = activeLocked()
         if (credentials.accessToken != rejected.value) return@withLock AccessToken(credentials.accessToken)
         if (refreshedAfterUnauthorized == credentials.accessToken) {
