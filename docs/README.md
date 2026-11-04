@@ -84,6 +84,25 @@ derived from `gradle.properties`. Release signed with an owner-held key outside 
 (certificate SHA-256 `67:18:88:93…`); CI builds the release variant unsigned. 84 JVM tests and lint
 passed locally. No CI run or device install of the new ID observed yet; M1 exit still needs both.
 See [M1-ANDROID-SIGNING.md](M1-ANDROID-SIGNING.md).
+CI [run 41867386428](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41867386428) later passed for
+commit `76ea783`; device install of the new ID remains open.
+
+**TASK-020: PASS — JVM tests and local build on 2026-11-04.** Production auth core: PKCE flow with
+listener lifecycle, refresh-token-retaining exchange, `/me` identity (`id` == owner, `account_id` required),
+AES-GCM/Keystore encrypted grant file and mutex-serialized refresh with rotation and 401 handling.
+108 JVM tests passed. Not yet wired into UI; Keystore and live refresh unverified on device.
+See [M2-AUTH.md](M2-AUTH.md).
+
+**TASK-020A: PASS — JVM tests and local build on 2026-11-04.** Local data is bound to a hashed
+`account_id` that survives sign-out; another account is rejected until an explicitly confirmed,
+crash-resumable account reset clears grant, account data (via reset steps) and binding. Repositories
+obtain an `AccountKey` only for the bound signed-in account. 115 JVM tests passed; no UI or device check.
+**TASK-021: PASS — JVM (Robolectric) tests and local build on 2026-11-04.** New `:data` module with the
+Room v1 schema (exported to `data/schemas/`, CI checks it is committed), TX-01/TX-03 transactions,
+account-scoped DataStore settings and a local-data reset step for account change. 126 JVM tests passed;
+no UI wiring or device run. See [M2-DATA.md](M2-DATA.md).
+
+Next planned task: TASK-022, Spotify Retrofit client.
 
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.

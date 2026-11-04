@@ -61,6 +61,9 @@ Screen capture/recent-task snapshots are blocked in this spike; product visual Q
 | Coroutines | 1.10.2 |
 | OkHttp | 4.12.0 |
 | Kotlin serialization JSON | 1.9.0 |
+| Room / KSP | 2.8.5 / 2.2.21-2.0.5 |
+| DataStore Preferences | 1.2.1 |
+| Robolectric (tests; runs SDK 34) | 4.16.1 |
 | SDK compile / target / minimum | 36 / 36 / 29 |
 | SDK build tools | 35.0.0; explicitly pinned |
 
@@ -83,10 +86,17 @@ Install JDK 17 and Android SDK command-line tools, accept SDK licenses, then ins
 (or SDK path in ignored `local.properties`).
 
 ```sh
-./gradlew --no-daemon :auth-core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./gradlew --no-daemon :auth-core:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
+The first `:data` test run downloads Robolectric's Android runtime jar.
+
 APK: `app/build/outputs/apk/debug/app-debug.apk`.
+Production auth (TASK-020, not yet used by the probe screen) reads build config from the ignored
+`spotify.local.properties` at the repository root: `spotify.clientId=<32-hex Client ID>` and
+`spotify.ownerUserId=<owner /user/<id>>`. Without it the build still succeeds with auth unconfigured.
+Never put a client secret there. See [the auth report](docs/M2-AUTH.md).
+
 Bump the version only via `replay.versionName` (`MAJOR.MINOR.PATCH`) in `gradle.properties`;
 versionCode is derived as `MAJOR*10000 + MINOR*100 + PATCH`.
 
@@ -94,7 +104,8 @@ Release: `./gradlew --no-daemon :app:assembleRelease` signs with the owner key f
 `~/.replay-signing/signing.properties` (or `REPLAY_SIGNING_*` environment variables) and writes
 `app/build/outputs/apk/release/app-release.apk`; without a key it writes an unsigned, non-installable APK.
 Never commit key material. Details and certificate fingerprint: [signing report](docs/M1-ANDROID-SIGNING.md).
-JVM HTML reports: `auth-core/build/reports/tests/test/index.html` and
+JVM HTML reports: `auth-core/build/reports/tests/test/index.html`,
+`data/build/reports/tests/testDebugUnitTest/index.html` and
 `app/build/reports/tests/testDebugUnitTest/index.html`.
 GitHub Actions runs the same checks and uploads APK/reports without Spotify credentials.
 Device/live integration gates cannot be replaced by CI tests.
@@ -119,6 +130,8 @@ TASK-011 workflow/artifact evidence: [M1-ANDROID-CI.md](docs/M1-ANDROID-CI.md).
 
 - `auth-core/`: Android-independent PKCE, bounded loopback listener, token/profile/API probes and atomic recovery journal;
   JVM tests using dummy data, localhost sockets and MockWebServer.
+- `data/`: Room v1 schema (exported to `data/schemas/`, must be committed), DAOs, account-scoped DataStore
+  settings and local-data reset; Robolectric tests with in-memory Room.
 - `app/`: native Compose diagnostic screen, lifecycle-aware browser launch and ViewModel.
 - `.github/workflows/android-ci.yml`: JVM/Android unit tests, lint and debug APK.
 

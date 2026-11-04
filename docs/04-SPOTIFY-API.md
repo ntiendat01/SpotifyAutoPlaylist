@@ -28,6 +28,10 @@ for a hashed account/client operation-journal namespace, and keep the token only
 session. The journal stores marker/playlist ID/one selected test-track ID/recovery state, never tokens
 or history. See [M0-API-SPIKE.md](M0-API-SPIKE.md) for confirmation, creation recovery and readback contracts.
 
+TASK-020 production identity decision: `/me.id` must equal the build-configured owner ID exactly
+(AUTH-006), and `/me.account_id` is required and persisted with the grant as the immutable account key
+for detecting account changes. Missing `account_id` rejects login. See [M2-AUTH.md](M2-AUTH.md).
+
 - Authorization URL `https://accounts.spotify.com/authorize`.
 - `response_type=code`, `client_id`, `redirect_uri`, `scope`, random `state`, `code_challenge_method=S256`, `code_challenge=BASE64URL(SHA256(verifier))`.
 - Verifier: secure random, 43–128 chars. Check exact state match, one-time code, callback URI and timeout.

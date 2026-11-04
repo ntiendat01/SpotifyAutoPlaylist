@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "SpotifyAutoPlaylist"
-include(":app", ":auth-core")
+include(":app", ":auth-core", ":data")

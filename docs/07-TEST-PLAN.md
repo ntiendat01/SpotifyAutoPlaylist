@@ -21,6 +21,15 @@ recorded by TASK-005. This does not supply individual recovery-case results or a
 evidence. Unit/integration evidence cannot mark the real endpoint gate passed. Full E2E cases below
 remain separate from the limited smoke-test signoff.
 
+TASK-020/020A JVM coverage (dummy data): TC-020 refresh/401 behavior, TC-032 wrong account at login and
+restore, TC-033 auth-layer reset (confirmation, ordered steps, crash resume). TC-033's Room/worker
+reset and TC-018/TC-031 device E2E remain open. See [M2-AUTH.md](M2-AUTH.md).
+
+TASK-021 Robolectric coverage (dummy data): TC-005/TC-010 idempotent page re-import at the DAO level,
+TX-01 rollback, TX-03 single outbox intention, per-account half-open counts, settings validation and
+isolation, and TC-033's Room/DataStore reset. Worker reset and sync-level cases remain open.
+See [M2-DATA.md](M2-DATA.md).
+
 ## 2. Core cases
 | ID | Type | Scenario | Expected |
 |---|---|---|---|

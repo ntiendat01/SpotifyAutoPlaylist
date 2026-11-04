@@ -61,12 +61,22 @@ See [M0-API-SPIKE.md](M0-API-SPIKE.md).
 ## 3. Data ownership / privacy
 - Spotify account IDs and listening history are personal data: store app-private, no analytics SDK, no export in MVP.
 - Encrypt tokens separately with Keystore-backed storage, avoid plaintext SharedPreferences and GitHub secrets. Exclude token store from backups.
+  TASK-020: one AES-256-GCM encrypted file `noBackupFilesDir/auth/credentials.bin` (AndroidKeyStore key
+  `replay.credentials.v1`) holds Client ID, user ID, `account_id`, tokens, expiry and scopes; atomic writes,
+  fail closed. Not in Room or DataStore. See [M2-AUTH.md](M2-AUTH.md).
 - On Disconnect: revoke local credentials (remote revoke if supported), stop worker; user chooses **Keep local history** or **Delete local history** (default delete), never delete Spotify playlist.
 - On uninstall: local Room DB normally removed, remote Spotify playlist persists.
 
 ## 4. Migrations / corruption
 - Schema version starts at 1. Every change requires an explicit Room migration and migration test; no destructive fallback in production.
 - On corruption: present recovery choice, never silently claim counts are complete.
+- TASK-020A: every account-scoped table/DataStore key must use `SpotifyAuthManager.requireAccount()`;
+  Room/DataStore deletion must be registered as an idempotent `AccountResetStep`. The data-owner binding
+  (`auth/account-binding.json`, hashed `account_id`) is outside Room.
+- TASK-021: implemented in `:data` (Room 2.8.5, schema JSON in `data/schemas/`, committed and checked by
+  CI). The second `play_events` index above is the primary key; foreign keys cascade from `account` and
+  `tracks`; writes use upsert, not `REPLACE`. Room's default helper still deletes a corrupted file — the
+  recovery choice above is not implemented yet. See [M2-DATA.md](M2-DATA.md).
 - Account change (AUTH-006): reject cross-account reuse of playlist/outbox, counters, tokens and cursors; stop workers and require explicit confirmation before disconnect/reconnect. MVP does not migrate history or playlist ownership between Spotify accounts.
 
 ## 5. Sample invariant queries

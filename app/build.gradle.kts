@@ -33,6 +33,19 @@ val releaseSigning: Map<String, String>? = run {
     keys.associateWith { props.getProperty(it) }
 }
 
+// Public Client ID and Developer App owner user ID (AUTH-006) from the ignored spotify.local.properties.
+// Builds without the file (CI) get empty values and the app reports "not configured".
+val spotifyConfig: Pair<String, String> = run {
+    val file = rootProject.file("spotify.local.properties")
+    if (!file.isFile) return@run "" to ""
+    val props = Properties().apply { file.inputStream().use(::load) }
+    val clientId = props.getProperty("spotify.clientId").orEmpty().trim()
+    val ownerId = props.getProperty("spotify.ownerUserId").orEmpty().trim()
+    require(clientId.matches(Regex("[0-9a-fA-F]{32}"))) { "spotify.clientId must be the 32-hex Client ID" }
+    require(ownerId.matches(Regex("[0-9A-Za-z._-]{1,128}"))) { "spotify.ownerUserId must be the /user/<id> value" }
+    clientId to ownerId
+}
+
 android {
     namespace = "com.spotifyautoplaylist.spike"
     compileSdk = libs.versions.android.compile.sdk.get().toInt()
@@ -44,6 +57,8 @@ android {
         targetSdk = libs.versions.android.target.sdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"${spotifyConfig.first}\"")
+        buildConfigField("String", "SPOTIFY_OWNER_USER_ID", "\"${spotifyConfig.second}\"")
     }
 
     signingConfigs {
@@ -72,7 +87,10 @@ android {
         }
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -93,6 +111,7 @@ dependencyLocking { lockAllConfigurations() }
 
 dependencies {
     implementation(project(":auth-core"))
+    implementation(project(":data"))
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)

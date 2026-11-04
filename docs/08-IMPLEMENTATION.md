@@ -49,13 +49,25 @@ Version 1.3.0 · Status: Baseline
     Owner-held RSA 4096 release key outside the repo; release APK signed and verified, unsigned when
     no key (CI). 84 tests and lint passed; release locks added without version changes. CI rerun and
     device install of the new ID pending. See [M1-ANDROID-SIGNING.md](M1-ANDROID-SIGNING.md).
-  **Exit:** clean CI build, app launches on device without Android Studio.
+    **Exit:** clean CI build, app launches on device without Android Studio.
 
 ### M2 — Auth and persistence
 
 - TASK-020 Implement production PKCE, callback listener, encrypted token storage, refresh serialization, account identity.
+  - **PASS — 2026-11-04, JVM tests and local build.** `SpotifyAuthManager`, `AuthorizationFlow`,
+    token/identity clients, AES-GCM encrypted atomic credential file, Keystore wiring and
+    `spotify.local.properties` → `BuildConfig`. 108 JVM tests (24 new) and lint passed. Keystore path
+    and live login/refresh not yet exercised on device; probe UI unchanged. See [M2-AUTH.md](M2-AUTH.md).
 - TASK-020A Enforce AUTH-006 matching account ID; on explicit account change reset active auth/session state and prevent reuse of previous account playlist/event mappings.
+  - **PASS — 2026-11-04, JVM tests and local build.** Hashed `account_id` data-owner binding kept across
+    sign-out; other accounts rejected at login/restore; `requireAccount()` key gate for repositories;
+    confirmed, durable, resumable `resetAccount` with ordered reset steps. 115 JVM tests passed.
+    Reset steps for Room/WorkManager are plugged in by TASK-021/051. See [M2-AUTH.md](M2-AUTH.md).
 - TASK-021 Implement Room schema, indexes, DAO, migrations and DataStore settings.
+  - **PASS — 2026-11-04, JVM (Robolectric) tests and local build.** `:data` module: Room v1 schema
+    (7 tables, exported, cascading FKs), TX-01/TX-03 DAOs, account-scoped DataStore settings and
+    `LocalDataReset` registered as an account reset step. 126 JVM tests passed. No migrations yet (v1);
+    Room's default corruption deletion still conflicts with 05 §4. See [M2-DATA.md](M2-DATA.md).
 - TASK-022 Implement Spotify Retrofit client with DTO tests, status handling, sanitized logs.
   **Exit:** login persists safely, history schema tests pass.
 

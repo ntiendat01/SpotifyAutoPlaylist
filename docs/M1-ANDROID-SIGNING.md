@@ -95,7 +95,9 @@ variant. The uploaded artifact is still the debug APK, now with the `.debug` ID.
 
 ## Remaining limits
 
-- No GitHub Actions run has been observed for these changes yet.
+- CI observed after commit: [run 41867386428](https://github.com/ntiendat01/SpotifyAutoPlaylist/actions/runs/41867386428)
+  for `76ea783` on `Dev` succeeded, including `:app:assembleRelease` (unsigned), debug `apksigner`
+  verification and artifact upload. Downloaded artifacts and JUnit XML for this run were not re-inspected.
 - No device was connected over ADB during this task; installing the new IDs on the OnePlus,
   launching, and an in-place update test (same key, higher versionCode) are still pending.
 - Launcher label is unchanged (`replay. · Auth thử nghiệm`) for both variants, so the two icons look
