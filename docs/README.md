@@ -71,6 +71,13 @@ XML were independently checked. See [M1-ANDROID-CI.md](M1-ANDROID-CI.md) for art
 non-blocking action/runner maintenance notices. The CI branch has not been merged into `Dev`/`main`.
 Next planned task: TASK-012, OnePlus installation/launch/navigation acceptance.
 
+**TASK-012: PASS — installed and launched on OnePlus Ace 5 on 2026-11-04.**
+CI APK from TASK-011 (commit `f7a1f01`, SHA-256 `bd348c30…`) installed via ADB after
+uninstalling a signature-incompatible local build. Cold launch 506 ms, all UI elements
+confirmed via UI automator dump, FLAG_SECURE verified. Device: CPH2691, Android 16
+(API 36), OxygenOS 16.0.2.400. See [M1-ANDROID-DEVICE.md](M1-ANDROID-DEVICE.md).
+Next planned task: TASK-013, application ID, signing strategy, versionCode/versionName.
+
 - Requirements: `FR-*`, `NFR-*`; rules: `BR-*`; tests: `TC-*`; implementation tasks: `TASK-*`.
 - A change to business logic must update rules, test fixtures and acceptance cases in the same pull request.
 - Document status: `Baseline` (this version), `Verified` (after gates), `Implemented`, `Released`.

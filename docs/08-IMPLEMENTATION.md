@@ -36,6 +36,13 @@ Version 1.3.0 · Status: Baseline
     APK checksum, source SHA, signature and metadata verified; 84 tests passed and lint passed.
     See [M1-ANDROID-CI.md](M1-ANDROID-CI.md) for artifact links and maintenance annotations. Next: TASK-012.
 - TASK-012 Install APK on OnePlus, verify launch, navigation and network permissions.
+  - **PASS — 2026-11-04, device installation and launch verified.**
+    CI APK (`bd348c30…`, commit `f7a1f01`) installed on CPH2691 (OnePlus Ace 5),
+    Android 16 / OxygenOS 16.0.2.400 via ADB. Cold launch 506 ms; UI automator dump
+    confirmed all Compose elements rendered; FLAG\_SECURE blocks screenshots (correct).
+    Prior local-signed APK required uninstall due to signature mismatch (expected for
+    debug builds). See [M1-ANDROID-DEVICE.md](M1-ANDROID-DEVICE.md). Manual scroll,
+    input and network acceptance deferred to user.
 - TASK-013 Configure application ID, signing strategy, versionCode/versionName.
   **Exit:** clean CI build, app launches on device without Android Studio.
 
