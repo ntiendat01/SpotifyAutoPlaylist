@@ -18,6 +18,12 @@ New acceptance steps:
 - Include the APK, checksum, source SHA and Gradle output metadata in `replay-auth-spike-debug-apk`.
 - Add JUnit and lint XML to `auth-spike-test-reports` alongside HTML reports, including available
   diagnostics on failure. Upload only the explicit report paths, not raw HTTP/session logs.
+- Pre-fetch Robolectric's SDK 34 runtime (`android-all-instrumented-14-robolectric-10818077-i7`, ~150 MB)
+  from Maven Central into `~/.m2/repository` with `curl --retry 5` and a `.sha512` check before Gradle runs
+  (added 2026-11-05 after run #22 failed with `ReplayDatabaseTest > classMethod` / `MavenArtifactFetcher`
+  IOException). Robolectric reads that local repository first, so tests no longer download it without
+  retry. Bump `ANDROID_ALL` in the workflow if `robolectric` or `robolectric.properties` `sdk` changes.
+  Verified locally only (script + full Gradle command); not yet observed on CI.
 - Retain both artifacts for 14 days. APK upload fails if there are no files; signature/checksum
   failures stop the job before APK upload.
 

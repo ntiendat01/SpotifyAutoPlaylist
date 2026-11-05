@@ -102,6 +102,10 @@ Room v1 schema (exported to `data/schemas/`, CI checks it is committed), TX-01/T
 account-scoped DataStore settings and a local-data reset step for account change. 126 JVM tests passed;
 no UI wiring or device run. See [M2-DATA.md](M2-DATA.md).
 
+**CI note (2026-11-05):** Android CI run #22 (TASK-040) failed while Robolectric downloaded its Android
+runtime jar (network IOException, not a test assertion). The workflow now pre-fetches that jar with retries
+and a checksum check; see [M1-ANDROID-CI.md](M1-ANDROID-CI.md). Not yet observed passing on CI.
+
 **TASK-022: PASS — JVM tests and local build on 2026-11-05.** New `:spotify-api` module: Retrofit client
 for recently played and playlist endpoints, DTOs, HTTP status/429/quota mapping, one 401 refresh-retry,
 ambiguous POSTs flagged for remote verification, and logs limited to endpoint/status/duration.

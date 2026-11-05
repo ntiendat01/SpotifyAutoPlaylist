@@ -30,6 +30,22 @@ jobs:
       - name: Install pinned SDK packages
         run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4; includes wrapper validation
+      - name: Pre-fetch Robolectric Android runtime
+        # Robolectric (sdk=34, robolectric.properties) otherwise downloads this ~150 MB jar inside the test JVM
+        # with no retry; a transient network error then fails ReplayDatabaseTest > classMethod. It reads
+        # ~/.m2/repository first. Keep the version in sync with libs.versions.toml robolectric = "4.16.1".
+        env:
+          ANDROID_ALL: 14-robolectric-10818077-i7
+        run: |
+          dir="$HOME/.m2/repository/org/robolectric/android-all-instrumented/$ANDROID_ALL"
+          base="https://repo1.maven.org/maven2/org/robolectric/android-all-instrumented/$ANDROID_ALL"
+          mkdir -p "$dir" && cd "$dir"
+          for f in jar pom; do
+            name="android-all-instrumented-$ANDROID_ALL.$f"
+            curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$name" "$base/$name"
+            curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -o "$name.sha512" "$base/$name.sha512"
+            echo "$(cat "$name.sha512")  $name" | sha512sum --check
+          done
       - name: JVM tests, Android tests, lint and APK
         # CI has no release key yet: assembleRelease checks the release variant and emits an unsigned APK.
         run: ./gradlew --no-daemon :auth-core:test :spotify-api:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease -Preplay.screenshots="$PWD/app/build/reports/ui"
