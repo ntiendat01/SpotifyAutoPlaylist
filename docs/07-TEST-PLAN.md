@@ -3,6 +3,14 @@
 Version 1.1.0 · Status: Baseline
 
 ## 1. Test strategy
+
+UI refresh acceptance (2026-11-05): existing navigation/search/filter/detail/back, create/link
+confirmation, sync/relink, rule-save/discard and disconnect tests must pass unchanged in intent.
+Add targeted regression checks for complete emerald roles, artwork URL mapping/download bounds,
+lazy list scroll restoration and both dimensions of 48dp action targets. Render synthetic loaded,
+empty/offline states at 393dp, 320dp/font1.3 and larger font/landscape; inspect actual output before
+claiming visual acceptance. Do not capture real account data. Run full JVM/Room/Compose tests, lint,
+debug/release compilation; distinguish local evidence from CI and device acceptance.
 - **Unit:** pure rule evaluator and time-zone calculations; deterministic clock, no network.
 - **DAO:** in-memory Room database, unique indexes, transactions, migrations.
 - **Integration:** mock HTTP with fixed Spotify fixtures, token refresh, cursor paging, error mapping and outbox reconciliation.
@@ -71,6 +79,11 @@ checks and sync/outbox E2E cases remain open. See [M2-SPOTIFY-API.md](M2-SPOTIFY
 | TC-032 | Integration | OAuth returns old/different Spotify user ID | Reject account, no history writes, no playlist creation/update |
 | TC-033 | Integration | Switch accounts after old account had stored history/playlist | Explicit confirmation; credentials/workers reset; no cross-account data or playlist reuse |
 | TC-034 | E2E | Old Spotify account playlist remains after new account connection | Old playlist remains under old account; new playlist created only under new account |
+| TC-035 | Unit | Play gap &lt; 30s after previous play (any track) | Excluded from daily/rolling counts (BR-016) |
+| TC-036 | Unit | Play gap exactly 30s | Counts toward rules |
+| TC-037 | Unit | Oldest play / first of ordered history | Counts (no predecessor) |
+| TC-038 | Unit | Track duration 15s, gap 15s / 10s | Counts / excluded when duration supplied |
+| TC-039 | Unit | Re-evaluate / re-sync with same events | Idempotent; no duplicate quals/outbox |
 
 ## 3. Fixture requirements
 Create deterministic JSON fixtures:

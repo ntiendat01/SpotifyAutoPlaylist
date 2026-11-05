@@ -6,6 +6,18 @@
 
 ## 0. Product and design intent
 
+**Owner-authorized UI refresh (2026-11-05):** implement the presentation improvements in
+`UI-REVIEW-2026-11-05.md` as one UI-only task, preserving existing workflows. Complete Material color
+roles, render stored Spotify artwork, reduce card/list density, improve responsive direct filters,
+Rules typography, Settings hierarchy and onboarding copy. Four tabs/routes, direct filter choices,
+OAuth, setup create/link confirmations, sync location/scheduling, rule save/discard and disconnect
+behavior stay as implemented. No new API calls except anonymous artwork fetches from stored CDN URLs;
+no database/schema/counting/outbox/auth changes. Artwork uses a bounded memory-only cache (8 MiB),
+bounded downloads (2 MiB), decode size ≤512px, HTTPS Spotify CDN only, no credentials/redirects/logs.
+History/Collection get one lazy scroll owner with stable track IDs; theme remains emerald dark.
+Diagnostics details may collapse, while Copy remains directly available. Keep inline save and direct
+create/link forms; defer review suggestions introducing filter sheets, pinned actions or new sync states.
+
 **Exact design references (v1.3):** see [`UI-VISUAL-REFERENCE.md`](UI-VISUAL-REFERENCE.md) and eight source PNGs in [`../design/reference/`](../design/reference/). All visual references must be reviewed alongside [`UI-VISUAL-DEVIATIONS.md`](UI-VISUAL-DEVIATIONS.md), which resolves conceptual-image vs. actual-MVP conflicts. For Codex use [`UI-CODEX-PROMPTS.md`](UI-CODEX-PROMPTS.md).
 
 **Brand working name:** `replay.` (product/project remains **Spotify AutoPlaylist**). Independent personal utility; never imply an official Spotify app or use Spotify's logo as our own mark. Display Spotify attribution where required by Spotify platform/branding rules. No audio streaming or playback controls in MVP.
@@ -148,7 +160,7 @@ All content surfaces must have accessibility semantics, TalkBack labels, and no 
 
 **Purpose:** make the two-rule OR logic comprehensible and adjustable without technical jargon.
 
-**Layout:** title `Rules Studio`; intro `Một bài chỉ cần đạt một điều kiện`; two large cards: `Trong một ngày` numeric stepper default **3** range **2..20** and `Trong 72 giờ` numeric stepper default **5** range **2..30**. Each card has explanatory example. Between cards prominent `HOẶC`. Read-only notes: `Ngày tính theo giờ Việt Nam` and `72 giờ là khoảng trượt`.
+**Layout:** title `Rules Studio`; intro `Một bài chỉ cần đạt một điều kiện`; two large cards: `Trong một ngày` numeric stepper default **3** range **2..20** and `Trong 72 giờ` numeric stepper default **5** range **2..30**. Each card has explanatory example. Between cards prominent `HOẶC`. Read-only notes: `Ngày tính theo giờ Việt Nam`, `72 giờ là khoảng trượt`, and `Chỉ tính lượt nghe từ 30 giây trở lên (ước lượng)` (BR-016).
 
 **Preview module:** shows 2–3 **real local tracks** closest to current thresholds with progress bars; when editing, compute preview in memory without mutating database. If no local tracks, show clearly labeled hypothetical sample only in a separate `Ví dụ minh họa` panel; no fake counts presented as user's history.
 

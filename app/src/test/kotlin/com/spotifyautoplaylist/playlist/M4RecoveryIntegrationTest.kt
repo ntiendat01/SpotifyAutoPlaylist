@@ -146,10 +146,14 @@ class M4RecoveryIntegrationTest {
             times.map { PlayEventEntity(u, track, it, 1) }, SyncStateEntity(u))
     }
 
-    /** [n] tracks, each played 3 times in one VN day (default daily >= 3), qualification order = index order. */
+    /** [n] tracks, each played 3 times in one VN day (default daily >= 3), qualification order = index order.
+     *  Non-overlapping [LISTEN]-spaced slots so TASK-055 min-listen gaps stay valid (no hour-bucket collisions). */
     private fun qualify(n: Int, account: AccountKey = A, offset: Int = 0): List<String> {
         val ids = (offset until offset + n).map(::id)
-        ids.forEachIndexed { i, t -> plays(account, t, DAY + i, DAY + HOUR + i, DAY + 2 * HOUR + i) }
+        ids.forEachIndexed { i, t ->
+            val base = DAY + (offset + i) * 3L * LISTEN
+            plays(account, t, base, base + LISTEN, base + 2 * LISTEN)
+        }
         val r = runBlocking { recorder.evaluate(account) }
         assertEquals(ids, r.newlyQualified)
         return ids
@@ -393,7 +397,8 @@ class M4RecoveryIntegrationTest {
         val dailyOnly = id(1); val rollingOnly = id(2); val base = id(3)
         plays(A, base, DAY, DAY + HOUR, DAY + 2 * HOUR)                     // daily >= 3
         plays(A, dailyOnly, DAY + 3 * HOUR, DAY + 4 * HOUR)                 // 2 plays in one day
-        plays(A, rollingOnly, DAY, DAY + 22 * HOUR, DAY + 44 * HOUR, DAY + 66 * HOUR) // 1/day, 4 within 72h
+        // +LISTEN so rollingOnly's first play does not collide with base at DAY (min-listen gap).
+        plays(A, rollingOnly, DAY + LISTEN, DAY + 22 * HOUR + LISTEN, DAY + 44 * HOUR + LISTEN, DAY + 66 * HOUR + LISTEN) // 1/day, 4 within 72h
         assertEquals(listOf(base), runBlocking { recorder.evaluate(A) }.newlyQualified)
         write()
         assertEquals(listOf(base), spotify.playlists[P1])
@@ -448,6 +453,8 @@ class M4RecoveryIntegrationTest {
         fun X(i: Int) = "X%021d".format(i)
         const val NOW = 1_800_000_000_000L
         const val HOUR = 3_600_000L
+        /** Clears TASK-055 min-listen between consecutive plays (any track). */
+        const val LISTEN = 60_000L
         val DAY = LocalDateTime.parse("2026-11-04T08:00").atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant().toEpochMilli()
     }
 }

@@ -180,11 +180,12 @@ class M3PipelineTest {
     }
 
     @Test fun `tc001 tc002 tc009 thresholds over synced history`() {
-        // Two plays one day: not qualified at 3, qualified at 2; three plays: qualified at third.
-        server.enqueue(page(listOf(item(3, T1), item(2, T2), item(2, T1), item(1, T2), item(1, T1)), false, at(1)))
+        // Unique minute slots so TASK-055 min-listen gaps (≥60s) stay valid across tracks.
+        // T1 at 1/3/5 → daily 3; T2 at 2/4 → not at 3, qualifies when daily lowered to 2.
+        server.enqueue(page(listOf(item(5, T1), item(4, T2), item(3, T1), item(2, T2), item(1, T1)), false, at(1)))
         sync()
         assertEquals(setOf(T1), qualified().keys)
-        assertEquals(at(3), qualified().getValue(T1).qualifiedAtMs)
+        assertEquals(at(5), qualified().getValue(T1).qualifiedAtMs)
         assertEquals(setOf(T1, T2), qualified(t = Thresholds(daily = 2)).keys)
     }
 

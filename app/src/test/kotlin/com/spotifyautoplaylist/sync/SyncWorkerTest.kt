@@ -28,6 +28,7 @@ import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.A
 import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.B
 import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.DAY
 import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.HOUR
+import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.LISTEN
 import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.NOW
 import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.P1
 import com.spotifyautoplaylist.playlist.M4RecoveryIntegrationTest.Companion.P2
@@ -131,11 +132,13 @@ class SyncWorkerTest {
         spotify.owners[playlist] = account.spotifyUserId
     }
 
-    /** [n] tracks played 3 times in one VN day on the remote (qualify at default daily 3). */
+    /** [n] tracks played 3 times in one VN day on the remote (qualify at default daily 3).
+     *  Staggered by LISTEN so TASK-055 min-listen gaps stay valid across tracks. */
     private fun listen(n: Int, account: AccountKey = A, offset: Int = 0): List<String> {
         val ids = (offset until offset + n).map(::id)
         ids.forEachIndexed { i, t ->
-            remotePlays.getOrPut(account.spotifyUserId) { mutableListOf() } += listOf(t to DAY + i, t to DAY + HOUR + i, t to DAY + 2 * HOUR + i)
+            val base = DAY + (offset + i) * 3L * LISTEN
+            remotePlays.getOrPut(account.spotifyUserId) { mutableListOf() } += listOf(t to base, t to base + LISTEN, t to base + 2 * LISTEN)
         }
         return ids
     }

@@ -45,3 +45,8 @@ Data tests updated for default 3.
 ## Verification
 `./gradlew --no-daemon :auth-core:test :spotify-api:test :data:testDebugUnitTest :data:lintDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`
 → BUILD SUCCESSFUL in ~34 s; 210 JVM tests, 0 failures, 0 skipped.
+
+
+## TASK-055 follow-up (minimum listen)
+Counting now runs `MinListenFilter` (BR-016) before daily/rolling scans. See [M3-MIN-LISTEN.md](M3-MIN-LISTEN.md).
+History sync storage and qualification monotonicity are unchanged.

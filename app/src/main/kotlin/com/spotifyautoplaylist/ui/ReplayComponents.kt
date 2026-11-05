@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.spotifyautoplaylist.library.TrackStatus
 
 enum class ReplayTab(val label: String, val glyph: ReplayGlyph) {
     Home("Home", ReplayGlyph.Home), History("Lịch sử", ReplayGlyph.History),
@@ -96,15 +97,19 @@ fun ReplayCard(modifier: Modifier = Modifier, hero: Boolean = false, content: @C
 
 @Composable
 fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier,
-                        enabled: Boolean = true, busy: Boolean = false) {
+                        enabled: Boolean = true, busy: Boolean = false, glyph: ReplayGlyph? = null) {
     Button(onClick, modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = enabled && !busy,
+        colors = ButtonDefaults.buttonColors(
+            disabledContainerColor = if (busy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = .12f),
+            disabledContentColor = if (busy) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface.copy(alpha = .38f),
+        ),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp), shape = CircleShape) {
         if (busy) {
-            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
             Spacer(Modifier.width(12.dp))
         }
         Text(text, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-        if (!busy) ReplayIcon(ReplayGlyph.Arrow, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onPrimary)
+        if (!busy && glyph != null) ReplayIcon(glyph, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onPrimary)
     }
 }
 
@@ -135,10 +140,12 @@ fun CoverageBanner(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun EmptyState(title: String, description: String, modifier: Modifier = Modifier, glyph: ReplayGlyph = ReplayGlyph.Music) {
-    ReplayCard(modifier) {
-        ReplayIcon(glyph, Modifier.size(32.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+    Row(modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        ReplayIcon(glyph, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }
 
@@ -185,9 +192,9 @@ fun ThresholdProgress(count: Int, threshold: Int, label: String) {
         val target = (count.toFloat() / threshold).coerceIn(0f, 1f)
         // Decorative fill-in only; the exact value is always in the text above and in the semantics.
         val reduced = reducedMotion()
-        val anim = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(if (reduced) target else 0f) }
+        val anim = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(target) }
         androidx.compose.runtime.LaunchedEffect(target, reduced) {
-            if (reduced) anim.snapTo(target) else anim.animateTo(target, androidx.compose.animation.core.tween(600))
+            if (reduced) anim.snapTo(target) else anim.animateTo(target, androidx.compose.animation.core.tween(200))
         }
         Box(Modifier.fillMaxWidth().clearAndSetSemantics { progressBarRangeInfo = androidx.compose.ui.semantics.ProgressBarRangeInfo(target, 0f..1f) }) {
             LinearProgressIndicator(progress = { anim.value }, modifier = Modifier.fillMaxWidth(), trackColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -198,47 +205,72 @@ fun ThresholdProgress(count: Int, threshold: Int, label: String) {
 /** Text/state supplied by a caller; never infers Added from a local count. */
 @Composable
 fun TrackRow(name: String, artists: String, status: String, onClick: (() -> Unit)?, modifier: Modifier = Modifier,
+             artworkUrl: String? = null, trackStatus: TrackStatus? = null, emphasized: Boolean = false,
              extra: @Composable ColumnScope.() -> Unit = {}) {
-    val colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    val colors = CardDefaults.cardColors(containerColor = if (emphasized) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background)
     if (onClick != null) Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, colors = colors) {
-        TrackRowBody(name, artists, status, extra)
+        TrackRowBody(name, artists, status, artworkUrl, trackStatus, emphasized, extra)
     } else Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, colors = colors) {
-        TrackRowBody(name, artists, status, extra)
+        TrackRowBody(name, artists, status, artworkUrl, trackStatus, emphasized, extra)
     }
 }
 
 @Composable
-private fun TrackRowBody(name: String, artists: String, status: String, extra: @Composable ColumnScope.() -> Unit) {
-        Row(Modifier.padding(16.dp).heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            TrackArtwork(Modifier.size(48.dp))
+private fun TrackRowBody(name: String, artists: String, status: String, artworkUrl: String?, trackStatus: TrackStatus?,
+                         emphasized: Boolean, extra: @Composable ColumnScope.() -> Unit) {
+        Row(Modifier.padding(horizontal = if (emphasized) 16.dp else 0.dp, vertical = 12.dp).heightIn(min = 56.dp),
+            verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TrackArtwork(Modifier.size(56.dp), artworkUrl)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(name, style = MaterialTheme.typography.titleMedium)
-                Text(artists, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(status, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                Text(artists, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                if (trackStatus != null) TrackStatusBadge(trackStatus)
+                if (status.isNotBlank()) Text(status, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 extra()
             }
         }
 }
 
 @Composable
-fun TrackArtwork(modifier: Modifier = Modifier) {
-    Box(modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-        ReplayIcon(ReplayGlyph.Music, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+fun TrackStatusBadge(status: TrackStatus) {
+    val review = status == TrackStatus.NEEDS_REVIEW || status == TrackStatus.REMOVED_EXTERNALLY
+    val color = when {
+        review -> ReplayTokens.Warning
+        status == TrackStatus.ADDED || status == TrackStatus.NEAR -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(color = color.copy(alpha = .09f), shape = CircleShape) {
+        Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            ReplayIcon(when { review -> ReplayGlyph.Info; status == TrackStatus.ADDED -> ReplayGlyph.Check; else -> ReplayGlyph.Pulse },
+                Modifier.size(14.dp), tint = color)
+            Text(status.label, style = MaterialTheme.typography.labelSmall, color = color)
+        }
     }
 }
 
 @Composable
 fun PlaylistHero(name: String?, confirmedCount: Int?, onOpen: (() -> Unit)? = null,
+                 artworkUrls: List<String> = emptyList(), compact: Boolean = false,
                  footer: @Composable ColumnScope.() -> Unit = {}) {
     ReplayCard(hero = true) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            TrackArtwork(Modifier.size(64.dp))
-            Text(name ?: "Playlist của bạn", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+            Box(Modifier.size(if (compact) 64.dp else 80.dp)) {
+                val covers = artworkUrls.filter(ArtworkImages::permitted).distinct().take(3)
+                if (covers.size <= 1) TrackArtwork(Modifier.fillMaxSize(), covers.firstOrNull())
+                else covers.forEachIndexed { index, url ->
+                    TrackArtwork(Modifier.size(60.dp).align(Alignment.Center).offset(x = ((index - 1) * 10).dp,
+                        y = ((1 - index) * 5).dp), url)
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("PLAYLIST SPOTIFY", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+                Text(name ?: "Playlist của bạn", style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium)
+            }
         }
         Text(confirmedCount?.let { "$it bài đã xác minh trên Spotify" } ?: "Chưa xác minh số bài trên Spotify",
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (onOpen != null) PrimaryActionButton("Mở trong Spotify", onOpen)
+            style = if (confirmedCount != null && !compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium,
+            color = if (confirmedCount != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+        if (onOpen != null) PrimaryActionButton("Mở trong Spotify", onOpen, glyph = ReplayGlyph.External)
         footer()
     }
 }

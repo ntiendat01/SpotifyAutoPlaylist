@@ -59,11 +59,13 @@ class QualificationRecorderTest {
 
     private val day = vn("2026-11-04T08:00")
     private val hour = 3_600_000L
+    /** Clears TASK-055 min-listen between consecutive plays (any track). */
+    private val listen = 60_000L
 
     @Test fun `tx03 new qualification and pending outbox row are written together`() = runBlocking<Unit> {
         link(A, "plA")
         plays(A, T1, day, day + hour, day + 2 * hour)
-        plays(A, T2, day, day + hour)
+        plays(A, T2, day + listen, day + hour + listen)
         val r = recorder.evaluate(A, Thresholds())
         assertEquals(listOf(T1), r.newlyQualified)
         assertEquals(listOf(QualificationEntity(A, T1, day + 2 * hour, QualifiedBy.DAILY)), quals(A))
@@ -137,7 +139,7 @@ class QualificationRecorderTest {
     @Test fun `every qualification has an outbox row when linked`() = runBlocking<Unit> {
         link(A, "plA")
         plays(A, T1, day, day + hour, day + 2 * hour)
-        plays(A, T2, day, day + 30 * hour, day + 50 * hour, day + 60 * hour, day + 70 * hour)
+        plays(A, T2, day + listen, day + 30 * hour, day + 50 * hour, day + 60 * hour, day + 70 * hour)
         recorder.evaluate(A, Thresholds())
         assertEquals(quals(A).map { it.trackId }.toSet(), outbox(A).map { it.trackId }.toSet())
     }
@@ -146,7 +148,7 @@ class QualificationRecorderTest {
         link(A, "plA")
         val key = AccountKey(A, "a".repeat(64))
         plays(A, T1, day, day + hour, day + 2 * hour)
-        plays(A, T2, day, day + hour)
+        plays(A, T2, day + listen, day + hour + listen)
         recorder.evaluate(key)
         assertEquals(listOf(T1), quals(A).map { it.trackId })
         val r = recorder.changeThresholds(key, daily = 2, rolling = 5)
@@ -167,7 +169,7 @@ class QualificationRecorderTest {
         assertEquals(QualifiedBy.DAILY, quals(A).single().qualifiedBy)
         assertEquals(listOf(T1), outbox(A).map { it.trackId })
         // A new track below the raised threshold does not qualify.
-        plays(A, T2, day, day + hour, day + 2 * hour)
+        plays(A, T2, day + listen, day + hour + listen, day + 2 * hour + listen)
         assertTrue(recorder.evaluate(key).newlyQualified.isEmpty())
     }
 
@@ -183,7 +185,8 @@ class QualificationRecorderTest {
         recorder.evaluate(A, Thresholds())
         val old = vn("2026-10-01T08:00")
         plays(A, T1, old, old + hour, old + 2 * hour)           // late-imported older history
-        plays(A, T3, day, day + hour, day + 2 * hour)           // same instant as T2 -> track ID tiebreak
+        // Same VN-day slots as T2 but +listen so min-listen gaps stay valid; track-ID tiebreak unchanged at equal qualifiedAt.
+        plays(A, T3, day + listen, day + hour + listen, day + 2 * hour + listen)
         val r = recorder.evaluate(A, Thresholds())
         assertEquals(listOf(T1, T3), r.newlyQualified)
         assertEquals(old + 2 * hour, quals(A).first().qualifiedAtMs)
@@ -196,9 +199,27 @@ class QualificationRecorderTest {
         val q = quals(A).ifEmpty { recorder.evaluate(A, Thresholds()); quals(A) }.single()
         assertEquals(QualifiedBy.ROLLING, q.qualifiedBy)
         assertEquals(day + 70 * hour, q.qualifiedAtMs)
-        plays(A, T2, day, day + 1, day + 2, day + 3, day + 4)
+        // Offset from T1's first play at [day] so all five T2 plays clear the min-listen gate.
+        plays(A, T2, day + listen, day + 2 * listen, day + 3 * listen, day + 4 * listen, day + 5 * listen)
         recorder.evaluate(A, Thresholds(daily = 5, rolling = 5))
         assertEquals(QualifiedBy.BOTH, quals(A).first { it.trackId == T2 }.qualifiedBy)
+    }
+
+
+    @Test fun `min-listen short gap does not qualify and re-eval stays idempotent`() = runBlocking<Unit> {
+        link(A, "plA")
+        // Three same-day plays for T1 but the 2nd/3rd are <30s after the previous global play → not countable.
+        plays(A, T1, day, day + 10_000, day + 20_000)
+        assertTrue(recorder.evaluate(A, Thresholds()).newlyQualified.isEmpty())
+        assertTrue(quals(A).isEmpty())
+        // Re-import same page + re-eval: still empty (idempotent); adding a real 3rd countable play qualifies once.
+        plays(A, T1, day, day + 10_000, day + 20_000)
+        assertTrue(recorder.evaluate(A, Thresholds()).newlyQualified.isEmpty())
+        plays(A, T1, day + listen, day + hour, day + 2 * hour)
+        val r = recorder.evaluate(A, Thresholds())
+        assertEquals(listOf(T1), r.newlyQualified)
+        repeat(2) { assertTrue(recorder.evaluate(A, Thresholds()).newlyQualified.isEmpty()) }
+        assertEquals(1, quals(A).size)
     }
 
     @Test fun `no events or empty batch writes nothing`() = runBlocking<Unit> {

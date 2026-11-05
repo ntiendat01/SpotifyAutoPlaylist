@@ -27,10 +27,10 @@ class HistoryScreenTest {
         compose.onNodeWithText("Lịch sử").performClick()
         compose.onNodeWithText("7 bài", substring = true).assertIsDisplayed()
         compose.capture("050D-history")
-        compose.onNode(hasText("Gần đạt") and hasClickAction()).performClick()
-        compose.onNode(hasText("Gần đạt") and hasClickAction()).assertIsSelected()
+        compose.onNodeWithTag("choice-Gần đạt").performClick()
+        compose.onNodeWithTag("choice-Gần đạt").assertIsSelected()
         compose.onNodeWithText("2 bài", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Tìm bài hát hoặc nghệ sĩ").performTextInput("bai thu b")
+        compose.onNodeWithText("Tìm bài hát, nghệ sĩ").performTextInput("bai thu b")
         compose.onNodeWithText("1 bài", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Bài thử A").assertDoesNotExist()
         compose.onNodeWithText("Bài thử B").performClick()
@@ -40,12 +40,12 @@ class HistoryScreenTest {
         compose.capture("050D-track-detail")
         compose.onNodeWithContentDescription("Quay lại").performClick()
         compose.onNodeWithText("1 bài", substring = true).assertIsDisplayed()
-        compose.onNode(hasText("Gần đạt") and hasClickAction()).assertIsSelected()
+        compose.onNodeWithTag("choice-Gần đạt").assertIsSelected()
     }
 
     @Test fun `no match and empty history states`() {
         compose.setContent { ReplaySurface { HistoryScreen(ready, {}, {}) } }
-        compose.onNodeWithText("Tìm bài hát hoặc nghệ sĩ").performTextInput("zzz")
+        compose.onNodeWithText("Tìm bài hát, nghệ sĩ").performTextInput("zzz")
         compose.onNodeWithText("Không có bài phù hợp").assertIsDisplayed()
     }
 

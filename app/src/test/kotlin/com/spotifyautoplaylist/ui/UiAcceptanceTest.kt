@@ -53,6 +53,8 @@ class UiAcceptanceTest {
             assertTrue("$name: unlabeled action #${n.id}", !label.isNullOrBlank())
             val h = with(Density(compose.density.density)) { maxOf(n.touchBoundsInRoot.height, n.size.height.toFloat()).toDp() }
             assertTrue("$name: '$label' touch height $h < 48dp", h >= 47.5.dp)
+            val w = with(Density(compose.density.density)) { maxOf(n.touchBoundsInRoot.width, n.size.width.toFloat()).toDp() }
+            assertTrue("$name: '$label' touch width $w < 48dp", w >= 47.5.dp)
         }
     }
 

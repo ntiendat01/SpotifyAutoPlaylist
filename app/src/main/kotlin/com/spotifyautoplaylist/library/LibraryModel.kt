@@ -10,6 +10,8 @@ import com.spotifyautoplaylist.data.local.QualifiedBy
 import com.spotifyautoplaylist.data.local.SyncStateEntity
 import com.spotifyautoplaylist.data.local.TrackEntity
 import com.spotifyautoplaylist.data.sync.SyncRunStatus
+import com.spotifyautoplaylist.spotify.rules.MinListenFilter
+import com.spotifyautoplaylist.spotify.rules.PlayRecord
 import com.spotifyautoplaylist.spotify.rules.QualificationEvaluator
 import java.time.Instant
 import java.time.LocalDate
@@ -62,6 +64,7 @@ data class TrackUiModel(
     val attemptCount: Int,
     val errorCode: String? = null,
     val spotifyUrl: String?,
+    val artworkUrl: String? = null,
 ) {
     /** Missing plays to the nearer threshold; 0 when either is reached. */
     fun remaining(daily: Int, rolling: Int) = minOf(daily - todayCount, rolling - rolling72hCount).coerceAtLeast(0)
@@ -96,11 +99,16 @@ object LibraryModel {
         val currentId = rows.playlist?.playlistId
         val outbox = rows.outbox.filter { it.playlistId == currentId }.associateBy { it.trackId }
         val quals = rows.qualifications.associateBy { it.trackId }
+        // Raw times for history display; countable times drive progress toward BR-001/BR-002 (TASK-055).
         val times = rows.events.groupBy({ it.trackId }, { it.playedAtMs }).mapValues { it.value.distinct().sortedDescending() }
+        val countable = MinListenFilter.countable(
+            rows.events.map { PlayRecord(it.spotifyUserId, it.trackId, it.playedAtMs) },
+        ).groupBy({ it.trackId }, { it.playedAtMs }).mapValues { it.value.distinct().sortedDescending() }
         val tracks = rows.tracks.map { t ->
             val played = times[t.trackId].orEmpty()
-            val todayCount = played.count { it <= nowMs && day(it) == today }
-            val rolling = played.count { it <= nowMs && it > nowMs - WINDOW }
+            val counted = countable[t.trackId].orEmpty()
+            val todayCount = counted.count { it <= nowMs && day(it) == today }
+            val rolling = counted.count { it <= nowMs && it > nowMs - WINDOW }
             val q = quals[t.trackId]
             val row = outbox[t.trackId]
             val near = q == null && (todayCount == rows.dailyThreshold - 1 || rolling == rows.rollingThreshold - 1)
@@ -113,6 +121,7 @@ object LibraryModel {
                 addedAtMs = row?.addedAtMs?.takeIf { row.state == OutboxState.PRESENT },
                 lastAttemptMs = row?.lastAttemptMs, attemptCount = row?.attemptCount ?: 0, errorCode = row?.lastErrorCode,
                 spotifyUrl = trackUrl(t.uri),
+                artworkUrl = t.imageUrl,
             )
         }.sortedWith(compareByDescending<TrackUiModel> { it.lastPlayedAtMs ?: Long.MIN_VALUE }.thenBy { it.trackId })
         val present = outbox.values.count { it.state == OutboxState.PRESENT }

@@ -44,3 +44,22 @@
 | 050G | Settings / Sync Health | Text-only health card and monospace diagnostics; relink card shown only on RELINK_REQUIRED; no toggles |
 | 050H | All data tabs | Rules stepper shows number over unit for large fonts; no other visual change |
 | 050I | Hero card glow and progress fill animation (not in concept) | Small polish allowed by 050I; bounded to the card; disabled under reduced motion |
+
+## Owner-authorized UI refresh — 2026-11-05
+
+The owner requested the UI review improvements with **no workflow changes**. These entries supersede
+the presentation limitations above where noted; the original milestone entries remain historical.
+
+| Surface | Implemented presentation | Workflow guard |
+|---|---|---|
+| Shared theme | Complete emerald Material container/surface roles; no default purple selected chips | Dark identity retained; no dynamic color setting |
+| Artwork | Stored `image_url` exposed to UI; anonymous HTTPS Spotify CDN images with 8 MiB memory-only cache, 2 MiB response cap, ≤512px decode; fallback disc | No auth/scopes, database migration or new Spotify API calls; no reference artwork in production |
+| Home | Real-artwork hero collage when available; dominant nearest-rule progress; supporting second count; quieter sync summary/empty states | Same sections/actions/routes; Sync Now remains in Settings |
+| History / Collection | Compact artwork rows, status pills, stable-key lazy lists; direct chips scroll horizontally at narrow widths instead of increasing header height | Same filters/segments/search and track-detail navigation; no filter sheet or extra selection confirmation |
+| Rules | Larger threshold values, concise intro and footnotes | Same inline Save, draft/default/discard/back behavior; no pinned action or rule changes |
+| Settings | Playlist/connection summary first; readable sync counts; diagnostics collapsed, Copy always available | Same sync/relink/disconnect callbacks and confirmations; no invented worker running state |
+| Welcome / Setup / Preview | Lighter benefit rows and concise privacy/rule notes; stale “sync not implemented” copy removed | Same OAuth/create/link/recovery/preview flow and confirmations; existing link form remains inline |
+
+Only WebP references are present in this checkout. The original PNG requirement could not be verified;
+existing reference files were inspected and left unchanged. Device screenshot/TalkBack/live artwork
+acceptance remains separate from synthetic Robolectric evidence in `UI-REFRESH-2026-11-05.md`.
