@@ -123,7 +123,12 @@ transaction: qualifications + PENDING outbox rows, backfill after playlist link,
 `QualificationRecorder` in `:app` (evaluate, threshold change re-evaluation). No schema change. 223 JVM
 tests passed; not wired to workers/UI; no Spotify writes. See [M3-QUALIFICATION-OUTBOX.md](M3-QUALIFICATION-OUTBOX.md).
 
-Next planned task: TASK-033, unit and integration tests TC-001..011, TC-026, TC-027.
+**TASK-033: PASS — JVM tests and local build on 2026-11-05.** Integration tests for repeated-sync stability,
+honest coverage status, gap/recovery, 429/quota, account isolation and threshold changes; TC traceability in
+[M3-TEST-TRACEABILITY.md](M3-TEST-TRACEABILITY.md). 238 JVM tests passed. Not run against live Spotify,
+a device or CI. HTTP and Room are covered in separate suites (see limitations there).
+
+Next planned task: TASK-040 (M4 playlist writer).
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

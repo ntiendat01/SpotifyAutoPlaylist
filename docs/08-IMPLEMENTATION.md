@@ -91,6 +91,10 @@ Version 1.3.0 · Status: Baseline
     TC-004/005/008/009/010 at persistence level (13 new tests, 223 total). No schema change; not wired to
     workers/UI; no Spotify writes. See [M3-QUALIFICATION-OUTBOX.md](M3-QUALIFICATION-OUTBOX.md).
 - TASK-033 Unit and integration tests TC-001..011, TC-026, TC-027.
+  - **PASS — 2026-11-05, JVM tests and local build.** `M3PipelineTest` (MockWebServer → SpotifyClient →
+    HistorySync → evaluator) and `M3RoomIntegrationTest` (HistorySync → Room → QualificationRecorder);
+    15 new tests, 238 total; no production code change, no bugs found. No live Spotify/device/CI run.
+    See [M3-TEST-TRACEABILITY.md](M3-TEST-TRACEABILITY.md).
   **Exit:** repeated sync produces stable counts and honest coverage status.
 
 ### M4 — Playlist writer
