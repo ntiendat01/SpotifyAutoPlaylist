@@ -100,6 +100,10 @@ Version 1.3.0 · Status: Baseline
 ### M4 — Playlist writer
 
 - TASK-040 Create/link private playlist with ownership check.
+  - **PASS — 2026-11-05, JVM tests and local build.** Create/link/recovery already from TASK-050B; added
+    `ManagedPlaylistVerifier` pre-write re-verification (deleted/foreign/public/collaborative → relink;
+    account-scoped). 8 new tests, 246 total; no schema change; not wired to workers/UI; no live
+    Spotify/device/CI run. See [M4-PLAYLIST-SETUP.md](M4-PLAYLIST-SETUP.md).
 - TASK-041 Paginate remote playlist items and reconcile before write.
 - TASK-042 Implement outbox state machine, ambiguous POST verification and external removal handling.
 - TASK-043 Tests TC-012..017, TC-028.

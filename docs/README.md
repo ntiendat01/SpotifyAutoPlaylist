@@ -128,7 +128,11 @@ honest coverage status, gap/recovery, 429/quota, account isolation and threshold
 [M3-TEST-TRACEABILITY.md](M3-TEST-TRACEABILITY.md). 238 JVM tests passed. Not run against live Spotify,
 a device or CI. HTTP and Room are covered in separate suites (see limitations there).
 
-Next planned task: TASK-040 (M4 playlist writer).
+**TASK-040: PASS — JVM tests and local build on 2026-11-05.** Create/link was already done by TASK-050B;
+added a read-only pre-write re-verification gate for the stored playlist mapping. 246 JVM tests passed; not
+run against live Spotify, a device or CI. See [M4-PLAYLIST-SETUP.md](M4-PLAYLIST-SETUP.md).
+
+Next planned task: TASK-041 (remote playlist item pagination and reconcile).
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
