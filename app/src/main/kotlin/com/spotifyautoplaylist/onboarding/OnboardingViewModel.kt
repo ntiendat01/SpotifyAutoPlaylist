@@ -48,7 +48,14 @@ class BrowserRequest(val uri: URI, val completion: CompletableDeferred<Boolean>)
     override fun toString() = "BrowserRequest(<redacted>)"
 }
 
-class OnboardingViewModel(private val auth: OnboardingAuth?, private val setup: PlaylistSetup?) : ViewModel() {
+/** TASK-051 hook: keep sync scheduled once a verified playlist exists. */
+fun interface SyncScheduleHook { suspend fun ensureScheduled() }
+
+class OnboardingViewModel(
+    private val auth: OnboardingAuth?,
+    private val setup: PlaylistSetup?,
+    private val sync: SyncScheduleHook? = null,
+) : ViewModel() {
     private val mutable = MutableStateFlow(OnboardingUiState(configured = auth != null))
     val state = mutable.asStateFlow()
     private val browser = Channel<BrowserRequest>(Channel.RENDEZVOUS)
@@ -94,6 +101,7 @@ class OnboardingViewModel(private val auth: OnboardingAuth?, private val setup: 
         runOperation {
             val playlist = requireNotNull(setup).create(state.value.playlistName, confirmed)
             mutable.value = mutable.value.copy(stage = OnboardingStage.READY, playlist = playlist)
+            schedule()
         }
     }
 
@@ -102,6 +110,7 @@ class OnboardingViewModel(private val auth: OnboardingAuth?, private val setup: 
         runOperation {
             val playlist = requireNotNull(setup).link(state.value.playlistLink, confirmed)
             mutable.value = mutable.value.copy(stage = OnboardingStage.READY, playlist = playlist, playlistLink = "")
+            schedule()
         }
     }
 
@@ -110,6 +119,7 @@ class OnboardingViewModel(private val auth: OnboardingAuth?, private val setup: 
         runOperation {
             val playlist = requireNotNull(setup).recover()
             mutable.value = mutable.value.copy(stage = OnboardingStage.READY, playlist = playlist)
+            schedule()
         }
     }
 
@@ -124,6 +134,12 @@ class OnboardingViewModel(private val auth: OnboardingAuth?, private val setup: 
             stage = if (snapshot.playlist == null) OnboardingStage.SETUP else OnboardingStage.READY,
             playlist = snapshot.playlist, recoveryRequired = snapshot.recoveryRequired, error = null,
         )
+        if (snapshot.playlist != null) schedule()
+    }
+
+    /** Best effort: a scheduling failure never blocks onboarding. */
+    private suspend fun schedule() {
+        try { sync?.ensureScheduled() } catch (e: CancellationException) { throw e } catch (_: Exception) { }
     }
 
     private fun runOperation(action: suspend () -> Unit) {

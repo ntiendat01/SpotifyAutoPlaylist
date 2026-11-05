@@ -132,6 +132,10 @@ history ingestion, counting or workers. Scope, tests, visual deviations and evid
 
 - TASK-050 Implement Compose onboarding, Dashboard, History, Rules, Settings with UI states.
 - TASK-051 WorkManager 30-min periodic best-effort sync and manual sync serialization.
+  - **PASS — 2026-11-05, JVM tests and local build.** WorkManager 2.11.2; `SyncOrchestrator` (history → evaluate →
+    writer), per-account single-flight, unique periodic (30 min, network, UPDATE) and manual (KEEP) work, persisted
+    Retry-After/quota window, cancel on sign-out/reset. No schema change, no UI. 24 new tests, 330 total; no live
+    Spotify/device/CI run; OxygenOS background reliability unverified (TASK-053). See [M5-SYNC-WORKER.md](M5-SYNC-WORKER.md).
 - TASK-052 Handle network/offline, 401/403/429, account mismatch and playlist deletion.
 - TASK-053 Device E2E TC-018..025, TC-029..030; verify background delays on OxygenOS.
 - TASK-054 Produce signed release APK and manual install/update test.

@@ -10,6 +10,10 @@ requires confirmation and GET verification of ownership/privacy. A durable creat
 POST retries after process death or uncertain results. Local auth uses Android Keystore encryption (M2).
 No client secret, token, authorization code or raw HTTP body is displayed or logged.
 
+Background sync (TASK-051): a 30-minute WorkManager job imports history, records qualifications and adds tracks
+to the managed playlist, serialized per account. It is tested on the JVM only; it has not run on live Spotify,
+a device or CI, and background reliability on OxygenOS is unverified. See [docs/M5-SYNC-WORKER.md](docs/M5-SYNC-WORKER.md).
+
 Qualification rule (owner, 2026-11-05): **>= 3 plays in one Vietnam day OR >= 5 plays in any rolling 72 h**.
 The pure history-sync engine (TASK-030) and qualification evaluator (TASK-031) exist as tested JVM logic only.
 

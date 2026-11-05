@@ -127,9 +127,11 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.navigation.compose)
     implementation(libs.coroutines.android)
+    implementation(libs.work.runtime.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
+    testImplementation(libs.work.testing)
     testImplementation(libs.androidx.test.core)
 }

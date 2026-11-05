@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
         val container = (application as ReplayApplication).container
         setContent {
             val model: OnboardingViewModel = viewModel(factory = viewModelFactory {
-                initializer { OnboardingViewModel(container.onboardingAuth, container.playlistSetup) }
+                initializer { OnboardingViewModel(container.onboardingAuth, container.playlistSetup, container.sync?.let { s -> SyncScheduleHook { s.ensureScheduled() } }) }
             })
             val state by model.state.collectAsStateWithLifecycle()
             var preview by rememberSaveable { mutableStateOf(false) }

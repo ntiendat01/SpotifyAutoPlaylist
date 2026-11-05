@@ -149,7 +149,11 @@ traceability ([M4-TEST-TRACEABILITY.md](M4-TEST-TRACEABILITY.md)); no production
 not run against live Spotify, a device or CI (CI not yet observed). M4 exit criterion is met at JVM level only;
 device/live gates remain.
 
-Next planned task: TASK-050 (M5 UI) / TASK-051 (worker), per docs/08.
+**TASK-051: PASS — JVM tests and local build on 2026-11-05.** WorkManager periodic and manual sync with
+per-account serialization ([M5-SYNC-WORKER.md](M5-SYNC-WORKER.md)). 330 JVM tests passed; not run against live
+Spotify, a device or CI. OxygenOS background reliability is unverified (TASK-053). No Sync Now button yet (TASK-050G).
+
+Next planned task: TASK-050C..I (M5 UI) / TASK-052, per docs/08.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
