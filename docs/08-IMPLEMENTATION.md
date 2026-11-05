@@ -115,7 +115,12 @@ Version 1.3.0 · Status: Baseline
     change. 22 new tests, 284 total; not wired to workers/UI; no live Spotify/device/CI run. See
     [M4-OUTBOX-WRITER.md](M4-OUTBOX-WRITER.md).
 - TASK-043 Tests TC-012..017, TC-028.
+  - **PASS — 2026-11-05, JVM tests and local build.** End-to-end recovery-path tests (Recorder → outbox → verifier →
+    reconciler → writer on in-memory Room, stateful fake remote with fault injection) plus a stateful MockWebServer
+    add/read-back variant. 22 new tests, 306 total; no production code change, no bugs found. CI not yet observed for
+    this commit; no live Spotify/device run. See [M4-TEST-TRACEABILITY.md](M4-TEST-TRACEABILITY.md).
   **Exit:** qualifying track appears exactly once in tested normal and recovery paths.
+  **Exit status (2026-11-05):** met at JVM level only (fakes/MockWebServer); device and live-Spotify gates remain open.
 
 ### M5 — UI, worker and release
 

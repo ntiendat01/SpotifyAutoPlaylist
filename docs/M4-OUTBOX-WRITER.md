@@ -35,8 +35,8 @@ Not wired to workers or UI (TASK-050/051). Broad TC suite is TASK-043.
 - Attempt cap `MAX_SEND_ATTEMPTS = 5` is an internal constant (docs give no number).
 
 ## TC traceability (OutboxWriterTest / AddItemsOutcomeTest)
-TC-012 (external removal), TC-013 (happy path + idempotent rerun), TC-014 (ambiguous applied / failed →
-retry next run), TC-015, TC-016 (404 relink), TC-025 (403), TC-028 (205 rows → 100/100/4 in order),
+TC-012 (already present, not POSTed), TC-013 (happy path + idempotent rerun), TC-014 (ambiguous applied / failed →
+retry next run), TC-015 (external removal), TC-016 (404 relink), TC-025 (403), TC-028 (205 rows → 100/100/4 in order),
 429 Retry-After, crash-resume of SENDING, account isolation, account switch mid-run, attempt cap.
 
 ## Limitations

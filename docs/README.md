@@ -144,7 +144,12 @@ Spotify, a device or CI. See [M4-PLAYLIST-RECONCILE.md](M4-PLAYLIST-RECONCILE.md
 verification and external removal handling; no schema change. 284 JVM tests passed; not run against live
 Spotify, a device or CI. See [M4-OUTBOX-WRITER.md](M4-OUTBOX-WRITER.md).
 
-Next planned task: TASK-043 (tests TC-012..017, TC-028).
+**TASK-043: PASS — JVM tests and local build on 2026-11-05.** M4 recovery-path integration tests and TC
+traceability ([M4-TEST-TRACEABILITY.md](M4-TEST-TRACEABILITY.md)); no production code change. 306 JVM tests passed;
+not run against live Spotify, a device or CI (CI not yet observed). M4 exit criterion is met at JVM level only;
+device/live gates remain.
+
+Next planned task: TASK-050 (M5 UI) / TASK-051 (worker), per docs/08.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
