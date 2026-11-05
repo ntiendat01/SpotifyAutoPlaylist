@@ -1,9 +1,9 @@
 # 02 — Business Rules & Temporal Semantics
 
-Version 1.1.0 · Status: Baseline
+Version 1.2.0 · Status: Baseline
 
 ## Canonical event
-A valid event `PlayEvent(userId, trackId, playedAt: Instant)` is one item returned by Spotify Recently Played with non-null track ID, type `track`, `is_local != true`, valid `played_at` timestamp, and belonging to the authenticated account. **One record = one play event**; it does not imply completion of the song. Podcasts, local files and invalid IDs are excluded. A replay event on a different device may be included if Spotify returns it.
+A valid event `PlayEvent(userId, trackId, playedAt: Instant)` is one item returned by Spotify Recently Played with non-null track ID, type `track`, `is_local != true`, valid `played_at` timestamp, and belonging to the authenticated account. **One record = one play event**; it does not imply completion of the song. Podcasts, local files and invalid IDs are excluded. A replay event on a different device may be included if Spotify returns it. Stored events remain the raw import; **counting** toward BR-001/BR-002 further requires BR-016 (minimum-listen estimate).
 
 ## Rules
 | ID | Exact behavior |
@@ -23,9 +23,10 @@ A valid event `PlayEvent(userId, trackId, playedAt: Instant)` is one item return
 | BR-013 | All state is scoped by Spotify user ID; switching accounts requires explicit disconnect/reset or a separately isolated dataset (multi-account out of scope). |
 | BR-014 | A playlist is created private (`public:false`), non-collaborative, once; on lost local ID, search own playlists by a stored marker/ID when possible, require user confirmation before creating another to avoid duplicates. |
 | BR-015 | If history completeness cannot be established, continue using available events but display partial coverage warning; do not infer missing plays. |
+| BR-016 | **Minimum listen (estimate):** a stored play P counts toward BR-001/BR-002 only if it passes the gap estimate. Let Q be the chronologically previous stored play of the same account (any track) after BR-004 dedupe. `gap = P.played_at - Q.played_at`. Threshold = `min(30s, duration_ms(P))` when duration is known and positive, else 30s. If `gap < threshold`, P was definitely listened for less than the threshold → exclude from counting. The oldest play in the ordered history has no predecessor and always counts. Spotify does not expose listened duration; gaps are an upper bound (pauses only lengthen them). |
 
 ## Counting algorithm (pure domain function)
-1. Group valid, deduplicated events by `trackId`; sort ascending by `playedAt`.
+1. Deduplicate events (BR-004); apply BR-016 minimum-listen filter over the account's chronological history (any track); group remaining events by `trackId`; sort ascending by `playedAt`.
 2. Daily: for each event, increment count of `(trackId, LocalDate(playedAt, Asia/Ho_Chi_Minh))`; first timestamp when count reaches threshold becomes daily qualification candidate.
 3. Rolling: use two pointers on sorted times, advancing left while `time[left] <= time[right] - 72h`; when window count >= threshold, candidate is `time[right]`.
 4. `qualifiedAt = min(dailyCandidate, rollingCandidate)` among available candidates; persist once (never overwrite an earlier existing qualification).
@@ -46,9 +47,14 @@ Complexity O(n log n) per track for sort; O(n) scan after sort. Use `java.time` 
 | EX-008 | User changes 3/day to 2/day | Previously stored two-event day now qualifies; never remove existing |
 | EX-009 | Track already in Spotify playlist manually | Mark PRESENT; no POST |
 | EX-010 | POST succeeded but response timed out | Re-read remote before retry |
+| EX-011 | Play P 10s after previous play Q (any track) | P excluded from daily/rolling counts |
+| EX-012 | Play P exactly 30s after Q | P counts (>= 30s) |
+| EX-013 | Oldest play in stored history | Counts (no predecessor) |
+| EX-014 | Track duration 15s, gap 20s | Counts when duration known (`min(30s,15s)=15s`); with unknown duration, 20s < 30s → excluded |
 
 ## Notes on limitations
-- The API cannot prove the user listened for 30 seconds or completed the track. No duration-based rule in MVP.
+- The API cannot prove the user listened for 30 seconds or completed the track. BR-016 only **excludes** plays whose inter-play gap is strictly under the threshold (definite short listens). Longer gaps may still be skips; those still count. When track `duration_ms` is not persisted (Room v1), the runtime threshold is always 30s; short-track `min(30s, duration)` is covered in the pure filter when duration is supplied (unit tests).
+- BR-016 applies to **new counting** on every evaluation over stored plays. Already-persisted qualifications and outbox rows are never removed (BR-006). Re-sync remains idempotent: short-gap plays may stay in `play_events` for history UI but do not count.
 - Track relinking and identical audio under multiple Spotify IDs are deliberately not merged.
 - For `played_at` collision within the same track and same millisecond, dedup may undercount; log diagnostic only if detectable.
 - Retention: keep event history while app installed; optional future pruning must preserve qualification and needed 72-hour calculations. No automatic pruning in MVP.

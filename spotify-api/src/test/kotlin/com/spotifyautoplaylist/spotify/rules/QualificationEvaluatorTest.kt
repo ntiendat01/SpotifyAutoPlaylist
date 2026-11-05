@@ -11,6 +11,8 @@ class QualificationEvaluatorTest {
     private fun vn(text: String) = LocalDateTime.parse(text).atZone(QualificationEvaluator.ZONE).toInstant().toEpochMilli()
     private fun ev(ms: Long, track: String = A, user: String = USER) = PlayRecord(user, track, ms)
     private fun eval(vararg e: PlayRecord, t: Thresholds = Thresholds()) = QualificationEvaluator.evaluate(USER, e.toList(), t)
+    /** Spacing that clears the TASK-055 minimum-listen gate between consecutive plays. */
+    private val gap = MinListenFilter.MIN_LISTEN_MS
 
     @Test fun defaultsAreThreePerDayAndFivePer72h() {
         assertEquals(3, Thresholds().daily)
@@ -37,7 +39,7 @@ class QualificationEvaluatorTest {
         // 23:00/23:30 VN Nov 4 and 00:30 VN Nov 5 are the same UTC day (Nov 4) but two VN days.
         val a = vn("2026-11-04T23:00"); val b = vn("2026-11-04T23:30"); val c = vn("2026-11-05T00:30")
         assertTrue(eval(ev(a), ev(b), ev(c)).isEmpty())
-        assertEquals(b, eval(ev(a), ev(b), ev(a + 1)).getValue(A).qualifiedAtMs)
+        assertEquals(b, eval(ev(a), ev(b), ev(a + gap)).getValue(A).qualifiedAtMs)
     }
 
     @Test fun tc004_fivePlaysWithin72hAcrossDaysQualifyRolling() {
@@ -62,19 +64,20 @@ class QualificationEvaluatorTest {
 
     @Test fun tc005_duplicateIdentitiesCountOnce() {
         val t = vn("2026-11-04T10:00")
-        assertTrue(eval(ev(t), ev(t), ev(t), ev(t + 1)).isEmpty())
+        assertTrue(eval(ev(t), ev(t), ev(t), ev(t + gap)).isEmpty())
     }
 
     @Test fun tc006_differentTrackIdsCountSeparately() {
         val t = vn("2026-11-04T10:00")
-        val r = eval(ev(t, A), ev(t + 1, A), ev(t + 2, B), ev(t + 3, B), ev(t + 4, A))
+        // Interleave A/B with >=30s gaps so every play is countable; A reaches 3 same day.
+        val r = eval(ev(t, A), ev(t + gap, A), ev(t + 2 * gap, B), ev(t + 3 * gap, B), ev(t + 4 * gap, A))
         assertEquals(setOf(A), r.keys)
     }
 
     @Test fun otherAccountsAreIgnored() {
         val t = vn("2026-11-04T10:00")
-        assertTrue(eval(ev(t), ev(t + 1), ev(t + 2, user = OTHER)).isEmpty())
-        assertTrue(QualificationEvaluator.evaluate(OTHER, listOf(ev(t), ev(t + 1), ev(t + 2))).isEmpty())
+        assertTrue(eval(ev(t), ev(t + gap), ev(t + 2 * gap, user = OTHER)).isEmpty())
+        assertTrue(QualificationEvaluator.evaluate(OTHER, listOf(ev(t), ev(t + gap), ev(t + 2 * gap))).isEmpty())
     }
 
     @Test fun unsortedInputGivesSameResultAndEmptyInputNothing() {
@@ -92,17 +95,17 @@ class QualificationEvaluatorTest {
 
     @Test fun earliestRuleWinsAndSimultaneousIsBoth() {
         val d = vn("2026-11-04T10:00")
-        // Daily (3rd at d+2) before rolling would reach 5.
-        assertEquals(QualifiedBy.DAILY, eval(ev(d), ev(d + 1), ev(d + 2), ev(d + 3), ev(d + 4)).getValue(A).qualifiedBy)
+        // Daily (3rd at d+2*gap) before rolling would reach 5.
+        assertEquals(QualifiedBy.DAILY, eval(ev(d), ev(d + gap), ev(d + 2 * gap), ev(d + 3 * gap), ev(d + 4 * gap)).getValue(A).qualifiedBy)
         // With daily 5 and rolling 5, the fifth same-day play satisfies both at once.
-        val both = eval(ev(d), ev(d + 1), ev(d + 2), ev(d + 3), ev(d + 4), t = Thresholds(daily = 5, rolling = 5)).getValue(A)
+        val both = eval(ev(d), ev(d + gap), ev(d + 2 * gap), ev(d + 3 * gap), ev(d + 4 * gap), t = Thresholds(daily = 5, rolling = 5)).getValue(A)
         assertEquals(QualifiedBy.BOTH, both.qualifiedBy)
-        assertEquals(d + 4, both.qualifiedAtMs)
+        assertEquals(d + 4 * gap, both.qualifiedAtMs)
     }
 
     @Test fun tc009_lowerDailyThresholdQualifiesMoreAndNeverFewer() {
         val t = vn("2026-11-04T10:00")
-        val events = listOf(ev(t), ev(t + 1), ev(t, B))
+        val events = listOf(ev(t), ev(t + gap), ev(t, B))
         val default = QualificationEvaluator.evaluate(USER, events)
         val lowered = QualificationEvaluator.evaluate(USER, events, Thresholds(daily = 2))
         assertTrue(default.isEmpty())

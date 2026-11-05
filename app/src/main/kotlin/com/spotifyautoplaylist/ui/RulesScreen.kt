@@ -56,7 +56,7 @@ fun RulesScreen(state: LibraryUiState, onRetry: () -> Unit, onSave: SaveRules?) 
         BackHandler(enabled = dirty && !busy) { confirmDiscard = true }
 
         ReplayHeading("Quy tắc")
-        Text("Bài được thêm khi đạt một trong hai điều kiện. Ngày tính theo giờ Việt Nam; 72 giờ là khoảng trượt.",
+        Text("Bài được thêm khi đạt một trong hai điều kiện. Ngày tính theo giờ Việt Nam; 72 giờ là khoảng trượt. Chỉ tính lượt nghe từ 30 giây trở lên (ước lượng).",
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Stepper("Ngưỡng theo ngày", "lượt trong một ngày", daily, AccountSettings.DAILY_RANGE) { daily = it; message = null }
         Text("HOẶC", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium,
@@ -70,7 +70,7 @@ fun RulesScreen(state: LibraryUiState, onRetry: () -> Unit, onSave: SaveRules?) 
                 else "Quy tắc hiện tại · ${preview.alreadyQualified} bài đã đủ điều kiện")
             preview.newlyQualified.take(3).forEach { Text("• ${it.name} — ${it.artists}", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (preview.newlyQualified.size > 3) Text("và ${preview.newlyQualified.size - 3} bài khác", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Tính từ lượt phát đã lưu trên máy. Tăng ngưỡng không xóa bài đã đủ điều kiện hoặc đã thêm.",
+            Text("Tính từ lượt phát đã lưu trên máy (chỉ tính lượt nghe từ 30 giây trở lên, ước lượng). Tăng ngưỡng không xóa bài đã đủ điều kiện hoặc đã thêm.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (s.coverage != Coverage.COMPLETE_SINCE_BASELINE) CoverageNotice(s.coverage)

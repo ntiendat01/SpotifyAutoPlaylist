@@ -148,7 +148,7 @@ All content surfaces must have accessibility semantics, TalkBack labels, and no 
 
 **Purpose:** make the two-rule OR logic comprehensible and adjustable without technical jargon.
 
-**Layout:** title `Rules Studio`; intro `Một bài chỉ cần đạt một điều kiện`; two large cards: `Trong một ngày` numeric stepper default **3** range **2..20** and `Trong 72 giờ` numeric stepper default **5** range **2..30**. Each card has explanatory example. Between cards prominent `HOẶC`. Read-only notes: `Ngày tính theo giờ Việt Nam` and `72 giờ là khoảng trượt`.
+**Layout:** title `Rules Studio`; intro `Một bài chỉ cần đạt một điều kiện`; two large cards: `Trong một ngày` numeric stepper default **3** range **2..20** and `Trong 72 giờ` numeric stepper default **5** range **2..30**. Each card has explanatory example. Between cards prominent `HOẶC`. Read-only notes: `Ngày tính theo giờ Việt Nam`, `72 giờ là khoảng trượt`, and `Chỉ tính lượt nghe từ 30 giây trở lên (ước lượng)` (BR-016).
 
 **Preview module:** shows 2–3 **real local tracks** closest to current thresholds with progress bars; when editing, compute preview in memory without mutating database. If no local tracks, show clearly labeled hypothetical sample only in a separate `Ví dụ minh họa` panel; no fake counts presented as user's history.
 

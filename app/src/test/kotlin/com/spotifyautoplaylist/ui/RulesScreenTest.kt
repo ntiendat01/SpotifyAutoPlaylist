@@ -30,6 +30,7 @@ class RulesScreenTest {
     @Test fun `draft preview save`() {
         show()
         compose.onNodeWithText("HOẶC").assertIsDisplayed()
+        compose.onNodeWithText("chỉ tính lượt nghe từ 30 giây trở lên", substring = true).assertIsDisplayed()
         compose.onNodeWithContentDescription("Ngưỡng theo ngày: 3 lượt trong một ngày").assertIsDisplayed()
         saveButton().performScrollTo().assertIsNotEnabled()
         compose.onNodeWithContentDescription("Giảm Ngưỡng theo ngày").performClick()

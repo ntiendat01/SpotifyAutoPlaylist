@@ -71,6 +71,11 @@ checks and sync/outbox E2E cases remain open. See [M2-SPOTIFY-API.md](M2-SPOTIFY
 | TC-032 | Integration | OAuth returns old/different Spotify user ID | Reject account, no history writes, no playlist creation/update |
 | TC-033 | Integration | Switch accounts after old account had stored history/playlist | Explicit confirmation; credentials/workers reset; no cross-account data or playlist reuse |
 | TC-034 | E2E | Old Spotify account playlist remains after new account connection | Old playlist remains under old account; new playlist created only under new account |
+| TC-035 | Unit | Play gap &lt; 30s after previous play (any track) | Excluded from daily/rolling counts (BR-016) |
+| TC-036 | Unit | Play gap exactly 30s | Counts toward rules |
+| TC-037 | Unit | Oldest play / first of ordered history | Counts (no predecessor) |
+| TC-038 | Unit | Track duration 15s, gap 15s / 10s | Counts / excluded when duration supplied |
+| TC-039 | Unit | Re-evaluate / re-sync with same events | Idempotent; no duplicate quals/outbox |
 
 ## 3. Fixture requirements
 Create deterministic JSON fixtures:

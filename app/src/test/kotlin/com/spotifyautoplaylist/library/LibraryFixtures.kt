@@ -14,7 +14,13 @@ object LibraryFixtures {
 
     fun id(n: Int) = "TRACK" + n.toString().padStart(17, '0')
     fun track(n: Int, name: String = "Bài thử ${'A' + n}") = TrackEntity(USER, id(n), "spotify:track:${id(n)}", name, "Nghệ sĩ thử $n", "Album thử", null)
-    fun plays(n: Int, vararg hoursAgo: Number) = hoursAgo.map { PlayEventEntity(USER, id(n), NOW - (it.toDouble() * H).toLong(), NOW) }
+    /**
+     * Play times are staggered by track index (≥35s) so TASK-055 min-listen gaps stay valid when several
+     * tracks share the same hour-ago bucket (cross-track predecessor rule).
+     */
+    fun plays(n: Int, vararg hoursAgo: Number) = hoursAgo.map {
+        PlayEventEntity(USER, id(n), NOW - (it.toDouble() * H).toLong() - n * 35_000L, NOW)
+    }
     fun outbox(n: Int, state: OutboxState, addedAt: Long? = null, playlist: String = PLAYLIST, error: String? = null, attempts: Int = 0) =
         PlaylistOutboxEntity(USER, playlist, id(n), state, attempts, NOW - H, addedAt, error)
     fun qual(n: Int, by: QualifiedBy = QualifiedBy.DAILY) = QualificationEntity(USER, id(n), NOW - 2 * H, by)

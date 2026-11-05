@@ -15,10 +15,11 @@ import com.spotifyautoplaylist.spotify.rules.QualifiedBy as RuleQualifiedBy
 data class EvaluationResult(val newlyQualified: List<String>, val playlistLinked: Boolean)
 
 /**
- * TASK-032: runs the pure [QualificationEvaluator] over the account's stored play events and persists the
- * result with `QualificationDao.qualifyBatch` (TX-03, one Room transaction). Idempotent and monotonic:
- * re-running never changes, duplicates or deletes qualifications or outbox rows. No network I/O.
- * `userId` / [AccountKey] must come from `SpotifyAuthManager.requireAccount()`.
+ * TASK-032/TASK-055: runs the pure [QualificationEvaluator] (including BR-016 min-listen) over the
+ * account's stored play events and persists the result with `QualificationDao.qualifyBatch` (TX-03, one
+ * Room transaction). Idempotent and monotonic: re-running never changes, duplicates or deletes
+ * qualifications or outbox rows — short-gap plays may stop counting toward *new* quals but never remove
+ * existing ones. No network I/O. `userId` / [AccountKey] must come from `SpotifyAuthManager.requireAccount()`.
  */
 class QualificationRecorder(private val database: ReplayDatabase, private val settings: SettingsRepository) {
 
