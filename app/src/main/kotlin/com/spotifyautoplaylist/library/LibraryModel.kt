@@ -249,6 +249,33 @@ object LibraryModel {
 }
 
 /** User-facing sync copy (06 §9). Only codes, never raw messages, reach the UI. */
+/** TASK-050G: sanitized diagnostics. Enum names, counts and times only; never IDs, names, URLs or tokens. */
+object Diagnostics {
+    private val CODE = Regex("[A-Z_]{1,40}")
+    fun code(raw: String?): String = when { raw == null -> "-"; CODE.matches(raw) -> raw; else -> "OTHER" }
+
+    fun queue(s: LibrarySnapshot): Map<TrackStatus, Int> =
+        listOf(TrackStatus.ADDED, TrackStatus.ADDING, TrackStatus.VERIFYING, TrackStatus.NEEDS_REVIEW).associateWith { st -> s.tracks.count { it.status == st } }
+
+    fun relinkRequired(st: SyncRunStatus) = st.outcome == "RELINK_REQUIRED" || st.errorCode == "RELINK_REQUIRED"
+
+    fun text(s: LibrarySnapshot, version: String): String {
+        val st = s.status
+        val q = queue(s)
+        fun t(ms: Long?) = ms?.let { LibraryModel.time(it, s.nowMs) } ?: "-"
+        return listOf(
+            "app=$version",
+            "outcome=${code(st.outcome)}", "error=${code(st.errorCode)}",
+            "finished=${t(st.finishedAtMs)}", "lastSuccess=${t(st.lastSuccessAtMs)}", "blockedUntil=${t(st.blockedUntilMs)}",
+            "coverage=${s.coverage.name}", "playlistLinked=${s.playlist != null}",
+            "thresholds=${s.dailyThreshold}/day,${s.rollingThreshold}/72h",
+            "lastRun=imported:${st.imported},qualified:${st.newlyQualified}",
+            "added=${q[TrackStatus.ADDED]},pending=${q[TrackStatus.ADDING]},verifying=${q[TrackStatus.VERIFYING]},review=${q[TrackStatus.NEEDS_REVIEW]}",
+            "tracksTracked=${s.tracks.size}",
+        ).joinToString("\n")
+    }
+}
+
 object SyncCopy {
     fun headline(status: SyncRunStatus, nowMs: Long): String = when (status.outcome) {
         null -> "Chưa đồng bộ lần nào"

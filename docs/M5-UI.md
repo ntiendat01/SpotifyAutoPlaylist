@@ -99,3 +99,12 @@ Rules Studio (`ui/RulesScreen.kt`) replaces the Rules placeholder.
 - There is no auto-add or notification toggle, no Room schema change, and the business rules are unchanged.
 - Foundation's BackHandler is now registered before the screen content, so a screen-level handler takes precedence.
 - Tests: RulesPreviewTest (4), RulesScreenTest (4). Screenshot: 050F-rules. JVM/Robolectric only; nothing was run on a device or against live Spotify.
+
+Settings / Sync Health (`ui/SettingsScreen.kt`) replaces the settings placeholder for the real app. The preview build keeps the placeholder.
+- **Health card:** sync headline (offline and error copy come from SyncCopy), last success, blocked-until, last-run imported/qualified counts, and queue counts split strictly into Added (verified) / Pending / Verifying / Review. Shows a coverage notice when coverage is not complete.
+- **Sync Now:** calls the real `SyncRepository.requestManualSync()` through `SettingsActions`. Since that call only enqueues, the screen shows "Đang chờ kết quả…" until the status flow reports a pass that finished after the request, then shows that result. Shows an error if there is no account or the request fails. It is disabled, with an explanation, when the build has no Spotify configuration.
+- **Diagnostics:** `Diagnostics.text` contains only enum codes (anything that isn't `[A-Z_]` becomes OTHER), counts and times; no IDs, names, URLs or tokens. The text is selectable and can be copied to the clipboard.
+- **Relink:** appears only when the status outcome or errorCode is RELINK_REQUIRED. You paste a link and tick a confirmation checkbox, which calls `SyncRepository.relinkPlaylist`, the TASK-052 serialized PlaylistRelinker path; every RelinkResult reason has Vietnamese copy. The app never creates a playlist.
+- **Deliberately left out:** the last-run "added" count is not shown, because Added is only claimed from PRESENT rows. There is no auto-sync or notification toggle.
+- No Room change.
+- Tests: DiagnosticsTest (2), SettingsScreenTest (3). Screenshots: 050G-settings, 050G-sync-result, 050G-relink. JVM/Robolectric only; WorkManager enqueue and relink have not been run on a device or against live Spotify.

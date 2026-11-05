@@ -71,6 +71,10 @@ class MainActivity : ComponentActivity() {
                     val libraryState = library?.state?.collectAsStateWithLifecycle()?.value
                     ReplayFoundation(
                         library = libraryState, onRetryLibrary = { library?.refresh() },
+                        settingsActions = if (preview) null else container.sync?.let { repo -> object : com.spotifyautoplaylist.ui.SettingsActions {
+                            override suspend fun syncNow() = repo.requestManualSync()
+                            override suspend fun relink(input: String, confirmed: Boolean) = repo.relinkPlaylist(input, confirmed)
+                        } },
                         onSaveRules = if (preview) null else ({ d, r -> container.saveRules(d, r).also { library?.refresh() } }),
                         preview = preview,
                         playlistName = if (preview) null else state.playlist?.name,
