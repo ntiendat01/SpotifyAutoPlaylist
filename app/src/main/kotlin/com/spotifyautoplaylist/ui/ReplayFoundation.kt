@@ -31,6 +31,7 @@ fun ReplayFoundation(
     library: com.spotifyautoplaylist.library.LibraryUiState? = null,
     onRetryLibrary: () -> Unit = {},
     onOpenUrl: ((String) -> Unit)? = null,
+    onSaveRules: SaveRules? = null,
 ) {
     val navigation = rememberNavController()
     val entry by navigation.currentBackStackEntryAsState()
@@ -53,6 +54,8 @@ fun ReplayFoundation(
             preview -> onExitPreview()
         }
     }
+    // Registered before screen content so a screen's own BackHandler (Rules draft) takes precedence.
+    BackHandler(enabled = settings || selected != ReplayTab.Home || preview) { back() }
     ReplayScaffold(
         tab = if (settings) null else selected,
         onSelect = { select(it) },
@@ -70,6 +73,7 @@ fun ReplayFoundation(
                         onOpenPlaylist = onOpenPlaylist, onOpenSettings = { navigation.navigate("settings") { launchSingleTop = true } },
                         onOpenTrack = openTrack)
                     else if (!preview && library != null && tab == ReplayTab.History) HistoryScreen(library, onRetryLibrary, openTrack)
+                    else if (!preview && library != null && tab == ReplayTab.Rules) RulesScreen(library, onRetryLibrary, onSaveRules)
                     else if (!preview && library != null && tab == ReplayTab.Collection) CollectionScreen(library, onRetryLibrary, onOpenPlaylist, openTrack)
                     else FoundationPage(preview, tab, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }
                 }
@@ -83,7 +87,6 @@ fun ReplayFoundation(
             }
         }
     }
-    BackHandler(enabled = settings || selected != ReplayTab.Home || preview) { back() }
     if (confirmDisconnect) AlertDialog(
         onDismissRequest = { confirmDisconnect = false },
         title = { Text("Ngắt kết nối Spotify?") },

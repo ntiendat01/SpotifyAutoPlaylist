@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity() {
                     val libraryState = library?.state?.collectAsStateWithLifecycle()?.value
                     ReplayFoundation(
                         library = libraryState, onRetryLibrary = { library?.refresh() },
+                        onSaveRules = if (preview) null else ({ d, r -> container.saveRules(d, r).also { library?.refresh() } }),
                         preview = preview,
                         playlistName = if (preview) null else state.playlist?.name,
                         onOpenPlaylist = if (preview) null else state.playlist?.let { playlist -> ({

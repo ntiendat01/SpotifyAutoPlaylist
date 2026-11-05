@@ -71,6 +71,12 @@ class AppContainer(context: Context) {
         com.spotifyautoplaylist.library.RoomLibrarySource(::currentAccount, database, settings, syncStatus)
     }
 
+    /** Rules Studio save (TASK-050F): DataStore + full re-evaluation; never removes qualifications. */
+    suspend fun saveRules(daily: Int, rolling: Int): Int {
+        val account = currentAccount() ?: throw IllegalStateException("no account")
+        return QualificationRecorder(database, settings).changeThresholds(account, daily, rolling).newlyQualified.size
+    }
+
     /** Null without Spotify configuration. */
     val syncOrchestrator: SyncOrchestrator? by lazy {
         val current = auth

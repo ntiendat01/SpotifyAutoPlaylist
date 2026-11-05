@@ -215,6 +215,20 @@ object LibraryModel {
         else -> t.status.label
     }
 
+    data class RulesPreview(val newlyQualified: List<TrackUiModel>, val alreadyQualified: Int)
+
+    /**
+     * Rules Studio preview: the same [QualificationEvaluator] the save path runs, over the same stored events
+     * (any past Vietnam day / 72h window). Existing qualifications are never removed, so only additions are listed.
+     */
+    fun rulesPreview(s: LibrarySnapshot, daily: Int, rolling: Int): RulesPreview {
+        val events = s.tracks.flatMap { t -> t.playTimesMs.map { com.spotifyautoplaylist.spotify.rules.PlayRecord("u", t.trackId, it) } }
+        val hits = QualificationEvaluator.evaluate("u", events, com.spotifyautoplaylist.spotify.rules.Thresholds(daily, rolling))
+        val newly = s.tracks.filter { it.qualifiedBy == null && it.trackId in hits }
+            .sortedByDescending { hits.getValue(it.trackId).qualifiedAtMs }
+        return RulesPreview(newly, s.tracks.count { it.qualifiedBy != null })
+    }
+
     fun day(ms: Long): LocalDate = Instant.ofEpochMilli(ms).atZone(ZONE).toLocalDate()
 
     private val TIME = DateTimeFormatter.ofPattern("HH:mm").withZone(ZONE)

@@ -90,3 +90,12 @@ Deviations / limitations
 - No "retry now" / "re-add" actions for review rows (no supported use case; would be scope expansion).
 - Selected chip colour comes from the Material3 scheme (not Replay green).
 - Screenshots: `app/build/reports/ui/050E-collection.png`, `050E-collection-pending.png`.
+
+Rules Studio (`ui/RulesScreen.kt`) replaces the Rules placeholder.
+- Draft steppers: daily 2..20 and rolling 2..30, "HOẶC" between them, explained in Vietnam-day / 72h terms. The steppers disable at their bounds, are 48dp, and have accessible labels; the values are in a live region.
+- Real-data preview: `LibraryModel.rulesPreview` runs the same `QualificationEvaluator` over the stored events, so it uses any past day or window. It lists only additions; raising a threshold never removes anything.
+- Save calls `QualificationRecorder.changeThresholds` through `AppContainer.saveRules`, then refreshes the library and shows "Đã lưu. Bài trong playlist không bị xóa." New tracks are added on the next sync.
+- Also: discard, restore defaults (3/5, applied as a draft), a "Bỏ thay đổi?" dialog on back while a draft exists, and a sanitized error on save failure that keeps the draft.
+- There is no auto-add or notification toggle, no Room schema change, and the business rules are unchanged.
+- Foundation's BackHandler is now registered before the screen content, so a screen-level handler takes precedence.
+- Tests: RulesPreviewTest (4), RulesScreenTest (4). Screenshot: 050F-rules. JVM/Robolectric only; nothing was run on a device or against live Spotify.
