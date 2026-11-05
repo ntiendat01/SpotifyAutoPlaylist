@@ -14,6 +14,9 @@ Background sync (TASK-051): a 30-minute WorkManager job imports history, records
 to the managed playlist, serialized per account. It is tested on the JVM only; it has not run on live Spotify,
 a device or CI, and background reliability on OxygenOS is unverified. See [docs/M5-SYNC-WORKER.md](docs/M5-SYNC-WORKER.md).
 
+Failure handling (TASK-052): offline, 401/403/429, account mismatch and a confirmed playlist relink are handled
+and tested on the JVM only (no UI, not run live/device/CI). See [docs/M5-ERROR-HANDLING.md](docs/M5-ERROR-HANDLING.md).
+
 Qualification rule (owner, 2026-11-05): **>= 3 plays in one Vietnam day OR >= 5 plays in any rolling 72 h**.
 The pure history-sync engine (TASK-030) and qualification evaluator (TASK-031) exist as tested JVM logic only.
 

@@ -44,6 +44,8 @@ enum class SyncOutcome {
     DISABLED,
     /** Bound account differs from the one the work was scheduled for: stopped. */
     ACCOUNT_CHANGED,
+    /** TASK-052 (AUTH-006): session/grant account differs from the bound account, or reset pending. Nothing called. */
+    ACCOUNT_MISMATCH,
 }
 
 data class SyncReport(
@@ -55,7 +57,19 @@ data class SyncReport(
     val write: WriteRun.Status? = null,
     /** True when this caller joined a pass that was already running for the account. */
     val coalesced: Boolean = false,
+    /** Sanitized cause: a WriteRun status, SpotifyErrorKind or AuthFailure enum name. */
+    val errorCode: String? = null,
 )
+
+/**
+ * TASK-052 (AUTH-006): the writer stack of a pass for [pass] account. If the live session is another account
+ * the pass stops with ACCOUNT_MISMATCH instead of writing for whoever is signed in now.
+ */
+fun boundAccount(pass: AccountKey, current: suspend () -> AccountKey): suspend () -> AccountKey = {
+    val now = current()
+    if (now != pass) throw AuthException(AuthFailure.ACCOUNT_MISMATCH)
+    now
+}
 
 /** Dependencies of one pass, built per account so nothing leaks across accounts. */
 interface SyncPass {
@@ -86,7 +100,7 @@ class SyncOrchestrator(
         val key = try {
             account() ?: return SyncReport(SyncOutcome.NO_ACCOUNT).also { log("sync $trigger NO_ACCOUNT") }
         } catch (e: AuthException) {
-            return SyncReport(SyncOutcome.AUTH_REQUIRED).also { log("sync $trigger AUTH_REQUIRED ${e.reason}") }
+            return fromAuth(e).also { log("sync $trigger ${it.outcome} ${e.reason}") }
         }
         if (expectedAccountHash != null && expectedAccountHash != key.accountHash) {
             return SyncReport(SyncOutcome.ACCOUNT_CHANGED).also { log("sync $trigger ACCOUNT_CHANGED") }
@@ -98,7 +112,7 @@ class SyncOrchestrator(
             return existing.await().copy(coalesced = true)
         }
         try {
-            val report = execute(trigger, key)
+            val report = exclusive(key) { execute(trigger, key) }
             mine.complete(report)
             log("sync $trigger ${report.outcome} write=${report.write} imported=${report.imported} qualified=${report.newlyQualified} added=${report.added}")
             return report
@@ -109,6 +123,17 @@ class SyncOrchestrator(
         } finally {
             lock.withLock { inFlight.remove(key.accountHash) }
         }
+    }
+
+    private val accountLocks = mutableMapOf<String, Mutex>()
+
+    /**
+     * TASK-052: runs [block] while no pass for [key] runs (and blocks passes meanwhile). Used for the relink
+     * transaction so outbox rows are never moved under a running writer. Different accounts never wait.
+     */
+    suspend fun <T> exclusive(key: AccountKey, block: suspend () -> T): T {
+        val m = lock.withLock { accountLocks.getOrPut(key.accountHash) { Mutex() } }
+        return m.withLock { block() }
     }
 
     private suspend fun execute(trigger: SyncTrigger, key: AccountKey): SyncReport {
@@ -127,17 +152,16 @@ class SyncOrchestrator(
             val write = pass.writer(key).run()
             fromWrite(write, imported, qualified)
         } catch (e: AuthException) {
-            SyncReport(if (e.reason == AuthFailure.QUOTA_EXCEEDED) SyncOutcome.QUOTA_EXCEEDED else SyncOutcome.AUTH_REQUIRED,
-                e.retryAfterSeconds, imported, qualified)
+            fromAuth(e).copy(imported = imported, newlyQualified = qualified)
         } catch (e: SpotifyApiException) {
-            SyncReport(fromKind(e.kind), e.retryAfterSeconds, imported, qualified)
+            SyncReport(fromKind(e.kind), e.retryAfterSeconds, imported, qualified, errorCode = e.kind.name)
         }
         status.record(key, SyncRunStatus(
             outcome = report.outcome.name,
             finishedAtMs = clock(),
             lastSuccessAtMs = if (report.outcome == SyncOutcome.SUCCESS) clock() else previous.lastSuccessAtMs,
             blockedUntilMs = blockedUntil(report, clock()),
-            errorCode = report.write?.name,
+            errorCode = report.errorCode ?: report.write?.name,
             imported = report.imported, newlyQualified = report.newlyQualified, added = report.added,
         ))
         return report
@@ -161,7 +185,29 @@ class SyncOrchestrator(
             WriteRun.Status.RELINK_REQUIRED -> SyncOutcome.RELINK_REQUIRED
             WriteRun.Status.ACCOUNT_CHANGED -> SyncOutcome.ACCOUNT_CHANGED
         }
-        return SyncReport(outcome, w.retryAfterSeconds, imported, qualified, added, w.status)
+        val code = (w.target as? WriteTarget.RelinkRequired)?.let { "RELINK_${it.reason}" }
+            ?: (w.target as? WriteTarget.Unavailable)?.kind?.name ?: w.errorKind?.name
+        return SyncReport(outcome, w.retryAfterSeconds, imported, qualified, added, w.status, errorCode = code)
+    }
+
+    /**
+     * TASK-052: token/session failures. Only a definite refusal (revoked/invalid grant after one refresh,
+     * missing scope, unreadable storage) needs re-auth; offline, 5xx and 429 during refresh are transient and
+     * keep the grant (SpotifyTokenClient). Account mismatch/reset pending is its own stop state.
+     */
+    private fun fromAuth(e: AuthException): SyncReport {
+        val outcome = when (e.reason) {
+            AuthFailure.QUOTA_EXCEEDED -> SyncOutcome.QUOTA_EXCEEDED
+            AuthFailure.ACCOUNT_MISMATCH, AuthFailure.RESET_PENDING -> SyncOutcome.ACCOUNT_MISMATCH
+            AuthFailure.NETWORK, AuthFailure.TOKEN_RESPONSE, AuthFailure.PROFILE_RESPONSE -> SyncOutcome.NETWORK_ERROR
+            AuthFailure.TOKEN_HTTP, AuthFailure.PROFILE_HTTP -> when (val code = e.httpStatus) {
+                429 -> SyncOutcome.RATE_LIMITED
+                null -> SyncOutcome.NETWORK_ERROR
+                else -> if (code >= 500) SyncOutcome.NETWORK_ERROR else SyncOutcome.AUTH_REQUIRED
+            }
+            else -> SyncOutcome.AUTH_REQUIRED
+        }
+        return SyncReport(outcome, e.retryAfterSeconds, errorCode = e.reason.name)
     }
 
     private fun fromKind(kind: SpotifyErrorKind) = when (kind) {

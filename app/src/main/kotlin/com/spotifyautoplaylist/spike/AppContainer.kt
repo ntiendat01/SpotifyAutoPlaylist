@@ -17,6 +17,8 @@ import com.spotifyautoplaylist.auth.AccountResetStep
 import com.spotifyautoplaylist.auth.AuthException
 import com.spotifyautoplaylist.data.sync.SyncStatusRepository
 import com.spotifyautoplaylist.playlist.ManagedPlaylistVerifier
+import com.spotifyautoplaylist.playlist.PlaylistRelinker
+import com.spotifyautoplaylist.playlist.RelinkResult
 import com.spotifyautoplaylist.playlist.OutboxWriter
 import com.spotifyautoplaylist.playlist.PlaylistReconciler
 import com.spotifyautoplaylist.rules.QualificationRecorder
@@ -27,6 +29,7 @@ import com.spotifyautoplaylist.sync.SyncOrchestrator
 import com.spotifyautoplaylist.sync.SyncPass
 import com.spotifyautoplaylist.sync.SyncRepository
 import com.spotifyautoplaylist.sync.SyncScheduler
+import com.spotifyautoplaylist.sync.boundAccount
 import java.time.Instant
 
 /**
@@ -76,6 +79,7 @@ class AppContainer(context: Context) {
                 override suspend fun evaluate(account: AccountKey) = recorder.evaluate(account).newlyQualified.size
                 override suspend fun autoSyncEnabled(account: AccountKey) = settings.current(account).autoSyncEnabled
                 override fun writer(account: AccountKey): OutboxWriter {
+                    val requireAccount = boundAccount(account, requireAccount)
                     val verifier = ManagedPlaylistVerifier(requireAccount, { database.playlists().managed(it) }, api::playlist)
                     val reconciler = PlaylistReconciler(requireAccount, verifier, { id, offset -> api.playlistItems(id, offset) }, database)
                     return OutboxWriter(requireAccount, reconciler, database, api::addTracks)
@@ -91,6 +95,17 @@ class AppContainer(context: Context) {
             hasVerifiedPlaylist = { database.playlists().managed(it.spotifyUserId)?.ownershipVerified == true },
             scheduler = scheduler,
             status = syncStatus,
+            relink = relink@{ key, input, confirmed ->
+                val orchestrator = syncOrchestrator
+                val api = spotify
+                if (orchestrator == null || api == null) return@relink RelinkResult.Rejected(RelinkResult.Reason.UNAVAILABLE)
+                val requireAccount: suspend () -> AccountKey = auth!!.manager::requireAccount
+                val verifier = ManagedPlaylistVerifier(requireAccount, { database.playlists().managed(it) }, api::playlist)
+                orchestrator.exclusive(key) {
+                    if (requireAccount() != key) RelinkResult.Rejected(RelinkResult.Reason.ACCOUNT_CHANGED)
+                    else PlaylistRelinker(requireAccount, database, verifier, api::playlist).relink(input, confirmed)
+                }
+            },
         )
     }
 

@@ -90,5 +90,5 @@ A failed periodic run does not cancel the schedule; the next one runs after 30 m
 - The onboarding hook (`SyncScheduleHook`) is wired but has no dedicated ViewModel test; `SyncRepository` is tested.
 - The 6 h quota pause and the 60 s default Retry-After are local choices; docs give no number.
 - `QualificationRecorder.evaluate` still re-reads all events each pass.
-- No relink flow (unchanged since TASK-043); RELINK_REQUIRED waits for the user.
+- Relink flow added in TASK-052 (no UI); see [M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md).
 - Single-flight is in-process only.

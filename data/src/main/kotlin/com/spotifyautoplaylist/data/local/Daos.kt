@@ -87,7 +87,10 @@ abstract class QualificationDao {
 
     @Query(
         "INSERT OR IGNORE INTO playlist_outbox (spotify_user_id, playlist_id, track_id, state, attempt_count) " +
-            "SELECT spotify_user_id, :playlistId, track_id, 'PENDING', 0 FROM qualification WHERE spotify_user_id = :userId",
+            "SELECT q.spotify_user_id, :playlistId, q.track_id, 'PENDING', 0 FROM qualification q WHERE q.spotify_user_id = :userId " +
+            // TASK-052: a track with an outbox row for any playlist of the account (e.g. PRESENT or
+            // REMOVED_EXTERNALLY on a relinked-away playlist) is never given a fresh PENDING intention.
+            "AND NOT EXISTS (SELECT 1 FROM playlist_outbox o WHERE o.spotify_user_id = q.spotify_user_id AND o.track_id = q.track_id)",
     )
     protected abstract suspend fun insertMissingOutbox(userId: String, playlistId: String)
 
@@ -115,6 +118,37 @@ abstract class QualificationDao {
     abstract suspend fun outboxInQualificationOrder(userId: String, playlistId: String): List<PlaylistOutboxEntity>
 
     @Update protected abstract suspend fun updateOutboxRow(item: PlaylistOutboxEntity): Int
+
+    @Query("SELECT * FROM managed_playlist WHERE spotify_user_id = :userId")
+    protected abstract suspend fun managedRow(userId: String): ManagedPlaylistEntity?
+
+    @Update protected abstract suspend fun updateManagedRow(playlist: ManagedPlaylistEntity): Int
+
+    /** Rows whose intention is still open; moved as fresh PENDING (new target, attempts restart). */
+    @Query(
+        "UPDATE OR IGNORE playlist_outbox SET playlist_id = :newId, state = 'PENDING', attempt_count = 0, " +
+            "last_attempt_ms = NULL, last_error_code = NULL WHERE spotify_user_id = :userId AND playlist_id = :oldId " +
+            "AND state IN ('PENDING', 'CHECKING_REMOTE', 'SENDING', 'VERIFY_REMOTE', 'RETRY_LATER', 'BLOCKED')",
+    )
+    protected abstract suspend fun moveOpenOutbox(userId: String, oldId: String, newId: String): Int
+
+    /**
+     * TASK-052 relink (TC-016, 03 §5): in one transaction re-points the account's `managed_playlist` from
+     * [expectedOldId] to [replacement] (via update, never a second row) and moves still-open outbox rows
+     * (PENDING / CHECKING_REMOTE / SENDING / VERIFY_REMOTE / RETRY_LATER / BLOCKED) to the new playlist as
+     * PENDING with attempts reset. PRESENT and REMOVED_EXTERNALLY rows stay on the old playlist ID as history
+     * and are never re-added. A row whose track already has a row on the new playlist is left in place
+     * (the new playlist's row wins). The caller must have verified the new playlist remotely. Returns moved rows.
+     */
+    @Transaction
+    open suspend fun relink(userId: String, expectedOldId: String, replacement: ManagedPlaylistEntity): Int {
+        require(replacement.spotifyUserId == userId) { "cross-account relink" }
+        require(replacement.playlistId != expectedOldId) { "same playlist" }
+        val current = checkNotNull(managedRow(userId)) { "not linked" }
+        check(current.playlistId == expectedOldId) { "mapping changed" }
+        check(updateManagedRow(replacement) == 1)
+        return moveOpenOutbox(userId, expectedOldId, replacement.playlistId)
+    }
 
     /**
      * TASK-041 (BR-007/BR-009, 03 §5): applies one COMPLETE remote membership read of [playlistId] to the account's

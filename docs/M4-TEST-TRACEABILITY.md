@@ -54,6 +54,6 @@ None. No production code changed in TASK-043.
 - Process death is modelled by an exception thrown from the POST lambda plus a fresh writer stack over the same
   Room instance; a real kill (e.g. mid-transaction) is not simulated. Room transactions are trusted.
 - The fake remote is consistent immediately; Spotify read-after-write lag is not modelled.
-- TC-016 relink to a new playlist: there is no flow that re-points outbox rows to a newly confirmed playlist
+- TC-016 relink to a new playlist: closed by TASK-052 ([M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md)); previously there was no flow that re-points outbox rows to a newly confirmed playlist
   (TASK-040..042 only pause and report `RelinkRequired`); tests assert the pause only.
 - RETRY_LATER rows are re-sent in the next run after a complete read; there is no backoff (TASK-051).

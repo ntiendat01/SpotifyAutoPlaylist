@@ -137,6 +137,9 @@ history ingestion, counting or workers. Scope, tests, visual deviations and evid
     Retry-After/quota window, cancel on sign-out/reset. No schema change, no UI. 24 new tests, 330 total; no live
     Spotify/device/CI run; OxygenOS background reliability unverified (TASK-053). See [M5-SYNC-WORKER.md](M5-SYNC-WORKER.md).
 - TASK-052 Handle network/offline, 401/403/429, account mismatch and playlist deletion.
+    Done (JVM only): auth failures classified (offline ≠ re-auth), ACCOUNT_MISMATCH outcome, pass writer bound to
+    the pass account, confirmed relink to an existing owned private playlist moving open outbox rows in one
+    transaction. No schema change, no UI; not run on live Spotify/device/CI. See [M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md).
 - TASK-053 Device E2E TC-018..025, TC-029..030; verify background delays on OxygenOS.
 - TASK-054 Produce signed release APK and manual install/update test.
   **Exit:** all release blockers cleared, docs status updated to Released.

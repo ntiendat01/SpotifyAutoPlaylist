@@ -24,7 +24,7 @@ interface SyncOrchestratorProvider {
  * - SUCCESS, PARTIAL, DEFERRED, DISABLED, RATE_LIMITED, QUOTA_EXCEEDED -> success: the Retry-After/quota window is
  *   persisted and the next run skips Spotify until it has passed; WorkManager backoff (min 10 s) is never used for 429.
  * - NETWORK_ERROR -> retry with the request's exponential backoff, at most [MAX_ATTEMPTS] runs, then failure.
- * - NO_ACCOUNT, AUTH_REQUIRED, RELINK_REQUIRED, FORBIDDEN, ACCOUNT_CHANGED -> failure: needs the user.
+ * - NO_ACCOUNT, AUTH_REQUIRED, RELINK_REQUIRED, FORBIDDEN, ACCOUNT_CHANGED, ACCOUNT_MISMATCH -> failure: needs the user.
  * A failed periodic run does not cancel the periodic schedule.
  */
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -46,7 +46,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             SyncOutcome.NETWORK_ERROR ->
                 if (attempt + 1 < MAX_ATTEMPTS) Result.retry() else Result.failure(workDataOf(KEY_OUTCOME to outcome.name))
             SyncOutcome.NO_ACCOUNT, SyncOutcome.AUTH_REQUIRED, SyncOutcome.RELINK_REQUIRED, SyncOutcome.FORBIDDEN,
-            SyncOutcome.ACCOUNT_CHANGED -> Result.failure(workDataOf(KEY_OUTCOME to outcome.name))
+            SyncOutcome.ACCOUNT_CHANGED, SyncOutcome.ACCOUNT_MISMATCH -> Result.failure(workDataOf(KEY_OUTCOME to outcome.name))
         }
         const val KEY_OUTCOME = "outcome"
     }

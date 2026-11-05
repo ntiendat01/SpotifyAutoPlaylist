@@ -247,6 +247,9 @@ class SyncWorkerTest {
     @Test fun `auth required - signed-out reason or 401 during history stops before writes`() {
         link(); listen(2)
         accountError = AuthException(AuthFailure.ACCOUNT_MISMATCH)
+        assertEquals(SyncOutcome.ACCOUNT_MISMATCH, run().outcome) // TASK-052: own outcome, still no writes
+        assertEquals(0, historyCalls)
+        accountError = AuthException(AuthFailure.REAUTH_REQUIRED)
         assertEquals(SyncOutcome.AUTH_REQUIRED, run().outcome)
         assertEquals(0, historyCalls)
         accountError = null
@@ -386,6 +389,7 @@ class SyncWorkerTest {
             SyncOutcome.DISABLED to "Success", SyncOutcome.RATE_LIMITED to "Success", SyncOutcome.QUOTA_EXCEEDED to "Success",
             SyncOutcome.NETWORK_ERROR to "Retry", SyncOutcome.NO_ACCOUNT to "Failure", SyncOutcome.AUTH_REQUIRED to "Failure",
             SyncOutcome.RELINK_REQUIRED to "Failure", SyncOutcome.FORBIDDEN to "Failure", SyncOutcome.ACCOUNT_CHANGED to "Failure",
+            SyncOutcome.ACCOUNT_MISMATCH to "Failure",
         )
         assertEquals(SyncOutcome.entries.toSet(), expected.keys)
         expected.forEach { (o, r) -> assertTrue("$o", SyncWorker.toResult(o, 0).javaClass.simpleName == r) }
