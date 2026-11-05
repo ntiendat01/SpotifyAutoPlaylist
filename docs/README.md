@@ -107,7 +107,13 @@ for recently played and playlist endpoints, DTOs, HTTP status/429/quota mapping,
 ambiguous POSTs flagged for remote verification, and logs limited to endpoint/status/duration.
 149 JVM tests passed; no live API call with this client yet. See [M2-SPOTIFY-API.md](M2-SPOTIFY-API.md).
 
-Next planned task: TASK-030, Recently Played pagination, watermark and gap detection.
+**TASK-030: PASS — JVM tests and local build on 2026-11-05.** Pure history-sync engine in `:spotify-api`
+(newest-page backward pagination, inclusive overlap on the high-water, per-page TX-01 persistence,
+high-water advanced only after bridging or a first baseline, gap → `HISTORY_INCOMPLETE`) and a Room
+adapter in `:app`. 194 JVM tests passed; no live API call, worker or UI wiring yet.
+See [M3-HISTORY-SYNC.md](M3-HISTORY-SYNC.md).
+
+Next planned task: TASK-031, pure daily and rolling qualification evaluator.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

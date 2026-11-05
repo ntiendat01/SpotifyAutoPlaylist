@@ -79,6 +79,9 @@ Version 1.3.0 · Status: Baseline
 ### M3 — History sync and rules
 
 - TASK-030 Implement newest-page backward pagination, watermark, overlap, gap detection and safe checkpoints.
+  - **PASS — 2026-11-05, JVM tests and local build.** `HistorySync` + `RoomHistoryStore`; TC-010, TC-011,
+    TC-026, TC-027 covered at sync level (15 new tests, 194 total). Not run against live Spotify; not wired
+    to workers/UI. See [M3-HISTORY-SYNC.md](M3-HISTORY-SYNC.md).
 - TASK-031 Implement pure daily and rolling qualification evaluator.
 - TASK-032 Implement transactional qualification/outbox and threshold re-evaluation.
 - TASK-033 Unit and integration tests TC-001..011, TC-026, TC-027.
