@@ -171,7 +171,10 @@ Not run against live Spotify, a device or CI.
 **TASK-050G: PASS — JVM tests and local build on 2026-11-05.** Settings/Sync Health with sanitized diagnostics, real Sync Now and relink entry ([M5-UI.md](M5-UI.md)).
 Not run against live Spotify, a device or CI.
 
-Next planned task: TASK-050H..I (M5 UI) / TASK-053, per docs/08.
+**TASK-050H: PASS — JVM tests and local build on 2026-11-05.** UI acceptance sweep: leak check, accessibility, large font, error/offline states ([M5-UI.md](M5-UI.md); UI-TC table in [M5-UI-ACCEPTANCE.md](M5-UI-ACCEPTANCE.md), device runs still required).
+Not run against live Spotify, a device or CI.
+
+Next planned task: TASK-050I (M5 UI) / TASK-053, per docs/08.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

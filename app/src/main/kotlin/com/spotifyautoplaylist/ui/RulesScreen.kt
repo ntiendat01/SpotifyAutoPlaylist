@@ -8,6 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -27,8 +28,12 @@ private fun Stepper(title: String, unit: String, value: Int, range: IntRange, on
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = { onChange(value - 1) }, enabled = value > range.first,
                 modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).semantics { contentDescription = "Giảm $title" }) { Text("−") }
-            Text("$value $unit", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f)
-                .semantics { liveRegion = LiveRegionMode.Polite })
+            Column(Modifier.weight(1f).clearAndSetSemantics { contentDescription = "$title: $value $unit"; liveRegion = LiveRegionMode.Polite },
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$value", style = MaterialTheme.typography.headlineMedium)
+                Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
             OutlinedButton(onClick = { onChange(value + 1) }, enabled = value < range.last,
                 modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).semantics { contentDescription = "Tăng $title" }) { Text("+") }
         }

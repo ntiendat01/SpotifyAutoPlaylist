@@ -108,3 +108,16 @@ Settings / Sync Health (`ui/SettingsScreen.kt`) replaces the settings placeholde
 - **Deliberately left out:** the last-run "added" count is not shown, because Added is only claimed from PRESENT rows. There is no auto-sync or notification toggle.
 - No Room change.
 - Tests: DiagnosticsTest (2), SettingsScreenTest (3). Screenshots: 050G-settings, 050G-sync-result, 050G-relink. JVM/Robolectric only; WorkManager enqueue and relink have not been run on a device or against live Spotify.
+
+JVM acceptance sweep. See [`M5-UI-ACCEPTANCE.md`](M5-UI-ACCEPTANCE.md) for the UI-TC-001..018 table, with each case marked covered-on-JVM or REQUIRES DEVICE, plus the manual OnePlus steps.
+- **LeakSweepTest:** scans app/data/spotify-api main sources for the concept-image example content (track names, artists, handle, counts, times, "Healthy" badges). There are no hits. The spec default playlist name and the Premium requirement copy are intentionally not banned.
+- **UiAcceptanceTest:**
+  - Renders Home, History, Collection, Rules and Settings at 320dp × font 1.3. Every click action has a label and a touch height of at least 48dp.
+  - Loading, no-account, error with retry, and offline states are checked on all five screens.
+  - Zero data shows no "Đã thêm vào Spotify" on any screen.
+- **Fixes found by the sweep:**
+  - Rules stepper values wrapped badly at font 1.3. They are now a number with the unit below, exposed as one TalkBack description ("Ngưỡng theo ngày: 3 lượt trong một ngày").
+  - The relink confirmation row is fully toggleable.
+  - The manual sync result now says "Đồng bộ thành công — không có bài mới" when nothing qualified, as UI-VISUAL-REFERENCE requires, and never claims tracks were added.
+- Tests: LeakSweepTest (1), UiAcceptanceTest (3). Screenshots: 050H-*-320dp-font13, 050H-*-empty, 050H-settings-offline.
+- Not done: TalkBack, device rendering and live flows. These are listed as REQUIRES DEVICE.

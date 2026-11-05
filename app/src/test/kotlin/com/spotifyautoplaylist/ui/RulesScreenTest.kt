@@ -30,7 +30,7 @@ class RulesScreenTest {
     @Test fun `draft preview save`() {
         show()
         compose.onNodeWithText("HOẶC").assertIsDisplayed()
-        compose.onNodeWithText("3 lượt trong một ngày").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Ngưỡng theo ngày: 3 lượt trong một ngày").assertIsDisplayed()
         saveButton().performScrollTo().assertIsNotEnabled()
         compose.onNodeWithContentDescription("Giảm Ngưỡng theo ngày").performClick()
         compose.onNodeWithText("2 bài sẽ đủ điều kiện thêm", substring = true).performScrollTo().assertIsDisplayed()
@@ -47,20 +47,20 @@ class RulesScreenTest {
         compose.onNodeWithContentDescription("Giảm Ngưỡng theo ngày").performClick()
         compose.onNodeWithContentDescription("Giảm Ngưỡng theo ngày").assertIsNotEnabled()
         compose.onNodeWithText("Bỏ thay đổi").performScrollTo().performClick()
-        compose.onNodeWithText("3 lượt trong một ngày").assertExists()
+        compose.onNodeWithContentDescription("Ngưỡng theo ngày: 3 lượt trong một ngày").assertExists()
         saveButton().assertIsNotEnabled()
     }
 
     @Test fun `back with draft asks to discard`() {
         show()
         compose.onNodeWithContentDescription("Tăng Ngưỡng 72 giờ").performScrollTo().performClick()
-        compose.onNodeWithText("6 lượt trong 72 giờ").assertExists()
+        compose.onNodeWithContentDescription("Ngưỡng 72 giờ: 6 lượt trong 72 giờ").assertExists()
         compose.runOnUiThread { assert(compose.activity.onBackPressedDispatcher.hasEnabledCallbacks()) { "no callback" } }
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.waitForIdle()
         compose.onNodeWithText("Bỏ thay đổi?").assertExists()
         compose.onNodeWithText("Tiếp tục sửa").performClick()
-        compose.onNodeWithText("6 lượt trong 72 giờ").assertExists()
+        compose.onNodeWithContentDescription("Ngưỡng 72 giờ: 6 lượt trong 72 giờ").assertExists()
     }
 
     @Test fun `save failure keeps draft with sanitized error`() {
@@ -70,6 +70,6 @@ class RulesScreenTest {
         compose.waitForIdle()
         compose.onNodeWithText("Không lưu được quy tắc", substring = true).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("secret", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("2 lượt trong một ngày").assertExists()
+        compose.onNodeWithContentDescription("Ngưỡng theo ngày: 2 lượt trong một ngày").assertExists()
     }
 }

@@ -42,3 +42,4 @@
 | 050E | `04-collection.png` | No `+100% vs last week` analytics; no artwork; chips not segmented control | Honest data only, no image loader |
 | 050F | Rules Studio | Placeholder artwork-free cards; preview lists up to 3 tracks + count; no auto-add/notification toggles (unsupported) |
 | 050G | Settings / Sync Health | Text-only health card and monospace diagnostics; relink card shown only on RELINK_REQUIRED; no toggles |
+| 050H | All data tabs | Rules stepper shows number over unit for large fonts; no other visual change |

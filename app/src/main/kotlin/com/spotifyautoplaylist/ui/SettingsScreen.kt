@@ -86,7 +86,11 @@ fun SettingsScreen(state: LibraryUiState, onRetry: () -> Unit, actions: Settings
         if (actions == null) Text("Bản dựng này chưa cấu hình Spotify nên không thể đồng bộ.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         requestedAt?.let { at ->
             val done = (st.finishedAtMs ?: 0) >= at
-            Text(if (done) "Kết quả đồng bộ thủ công: ${SyncCopy.headline(st, s.nowMs)}"
+            Text(if (done) "Kết quả đồng bộ thủ công: " + when {
+                    st.outcome == "SUCCESS" && st.newlyQualified == 0 -> "Đồng bộ thành công — không có bài mới"
+                    st.outcome == "SUCCESS" -> "Đồng bộ thành công — ${st.newlyQualified} bài mới đủ điều kiện (xem Bộ sưu tập để biết bài đã xác minh)"
+                    else -> SyncCopy.headline(st, s.nowMs)
+                }
                  else "Đã yêu cầu đồng bộ. Đang chờ kết quả…",
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 color = if (done && SyncCopy.isProblem(st)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
