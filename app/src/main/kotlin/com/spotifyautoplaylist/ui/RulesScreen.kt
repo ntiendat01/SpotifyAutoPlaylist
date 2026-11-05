@@ -30,8 +30,8 @@ private fun Stepper(title: String, unit: String, value: Int, range: IntRange, on
                 modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).semantics { contentDescription = "Giảm $title" }) { Text("−") }
             Column(Modifier.weight(1f).clearAndSetSemantics { contentDescription = "$title: $value $unit"; liveRegion = LiveRegionMode.Polite },
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("$value", style = MaterialTheme.typography.headlineMedium)
-                Text(unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Text("$value", style = MaterialTheme.typography.displaySmall)
+                Text(unit, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
             OutlinedButton(onClick = { onChange(value + 1) }, enabled = value < range.last,
@@ -56,12 +56,14 @@ fun RulesScreen(state: LibraryUiState, onRetry: () -> Unit, onSave: SaveRules?) 
         BackHandler(enabled = dirty && !busy) { confirmDiscard = true }
 
         ReplayHeading("Quy tắc")
-        Text("Bài được thêm khi đạt một trong hai điều kiện. Ngày tính theo giờ Việt Nam; 72 giờ là khoảng trượt. Chỉ tính lượt nghe từ 30 giây trở lên (ước lượng).",
+        Text("Chỉ cần đạt một trong hai điều kiện.", style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Stepper("Ngưỡng theo ngày", "lượt trong một ngày", daily, AccountSettings.DAILY_RANGE) { daily = it; message = null }
         Text("HOẶC", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally))
         Stepper("Ngưỡng 72 giờ", "lượt trong 72 giờ", rolling, AccountSettings.ROLLING_RANGE) { rolling = it; message = null }
+        Text("Ngày theo giờ Việt Nam · 72 giờ là khoảng trượt; chỉ tính lượt nghe từ 30 giây trở lên (ước lượng).",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         ReplayHeading("Xem trước")
         val preview = remember(s, daily, rolling) { LibraryModel.rulesPreview(s, daily, rolling) }
@@ -70,7 +72,7 @@ fun RulesScreen(state: LibraryUiState, onRetry: () -> Unit, onSave: SaveRules?) 
                 else "Quy tắc hiện tại · ${preview.alreadyQualified} bài đã đủ điều kiện")
             preview.newlyQualified.take(3).forEach { Text("• ${it.name} — ${it.artists}", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (preview.newlyQualified.size > 3) Text("và ${preview.newlyQualified.size - 3} bài khác", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Tính từ lượt phát đã lưu trên máy (chỉ tính lượt nghe từ 30 giây trở lên, ước lượng). Tăng ngưỡng không xóa bài đã đủ điều kiện hoặc đã thêm.",
+            Text("Tính từ lượt phát đã lưu trên máy. Tăng ngưỡng không xóa bài đã đủ điều kiện hoặc đã thêm.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (s.coverage != Coverage.COMPLETE_SINCE_BASELINE) CoverageNotice(s.coverage)

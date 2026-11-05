@@ -3,6 +3,14 @@
 Version 1.1.0 · Status: Baseline
 
 ## 1. Test strategy
+
+UI refresh acceptance (2026-11-05): existing navigation/search/filter/detail/back, create/link
+confirmation, sync/relink, rule-save/discard and disconnect tests must pass unchanged in intent.
+Add targeted regression checks for complete emerald roles, artwork URL mapping/download bounds,
+lazy list scroll restoration and both dimensions of 48dp action targets. Render synthetic loaded,
+empty/offline states at 393dp, 320dp/font1.3 and larger font/landscape; inspect actual output before
+claiming visual acceptance. Do not capture real account data. Run full JVM/Room/Compose tests, lint,
+debug/release compilation; distinguish local evidence from CI and device acceptance.
 - **Unit:** pure rule evaluator and time-zone calculations; deterministic clock, no network.
 - **DAO:** in-memory Room database, unique indexes, transactions, migrations.
 - **Integration:** mock HTTP with fixed Spotify fixtures, token refresh, cursor paging, error mapping and outbox reconciliation.

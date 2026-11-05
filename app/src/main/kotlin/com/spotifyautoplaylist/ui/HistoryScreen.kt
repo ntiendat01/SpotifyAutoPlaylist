@@ -1,12 +1,16 @@
 package com.spotifyautoplaylist.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -16,13 +20,12 @@ import com.spotifyautoplaylist.library.*
 import com.spotifyautoplaylist.library.LibraryModel.StatusFilter
 import com.spotifyautoplaylist.library.LibraryModel.TimeFilter
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { o ->
             FilterChip(selected = o == selected, onClick = { onSelect(o) }, label = { Text(label(o)) },
-                modifier = Modifier.heightIn(min = 48.dp))
+                modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).testTag("choice-${label(o)}"))
         }
     }
 }
@@ -32,24 +35,28 @@ fun HistoryScreen(state: LibraryUiState, onRetry: () -> Unit, onOpenTrack: (Stri
     var query by rememberSaveable { mutableStateOf("") }
     var time by rememberSaveable { mutableStateOf(TimeFilter.ALL) }
     var status by rememberSaveable { mutableStateOf(StatusFilter.ALL) }
-    LibraryGate(state, onRetry) { s ->
+    LibraryListPage(state, onRetry) { s ->
+        item("history-controls") { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ReplayHeading("Lịch sử nghe")
         OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), singleLine = true,
-            label = { Text("Tìm bài hát hoặc nghệ sĩ") },
-            leadingIcon = { ReplayIcon(ReplayGlyph.History, Modifier.size(20.dp)) },
+            label = { Text("Tìm bài hát, nghệ sĩ") },
+            leadingIcon = { ReplayIcon(ReplayGlyph.Search, Modifier.size(20.dp)) },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search))
         ChoiceChips(TimeFilter.entries, time, { it.label }) { time = it }
         ChoiceChips(StatusFilter.entries, status, { it.label }) { status = it }
         CoverageNotice(s.coverage)
+        } }
         val rows = LibraryModel.history(s, query, time, status)
+        item("history-summary") {
         Text("${rows.size} bài · ${LibraryModel.plays(rows, time)} lượt phát được ghi nhận",
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+            style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 8.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant) }
         when {
-            s.tracks.isEmpty() -> EmptyState("Chưa có lịch sử trên máy", "Lượt phát xuất hiện sau lần đồng bộ thành công đầu tiên.", glyph = ReplayGlyph.History)
-            rows.isEmpty() -> EmptyState("Không có bài phù hợp", "Thử đổi từ khóa hoặc bộ lọc.", glyph = ReplayGlyph.History)
-            else -> rows.forEach { t ->
-                TrackRow(t.name, t.artists, "Hôm nay ${t.todayCount} · 72 giờ ${t.rolling72hCount} · ${t.status.label}",
-                    { onOpenTrack(t.trackId) })
+            s.tracks.isEmpty() -> item("empty") { EmptyState("Chưa có lịch sử trên máy", "Lượt phát xuất hiện sau lần đồng bộ thành công đầu tiên.", glyph = ReplayGlyph.History) }
+            rows.isEmpty() -> item("empty") { EmptyState("Không có bài phù hợp", "Thử đổi từ khóa hoặc bộ lọc.", glyph = ReplayGlyph.History) }
+            else -> items(rows, key = { "track-${it.trackId}" }) { t ->
+                TrackRow(t.name, t.artists, "Hôm nay ${t.todayCount} · 72 giờ ${t.rolling72hCount}",
+                    { onOpenTrack(t.trackId) }, artworkUrl = t.artworkUrl, trackStatus = t.status)
             }
         }
     }
@@ -62,14 +69,14 @@ fun TrackDetailScreen(state: LibraryUiState, trackId: String, onRetry: () -> Uni
         if (t == null) { EmptyState("Không tìm thấy bài trên máy", "Bài này không còn trong dữ liệu của tài khoản hiện tại."); return@LibraryGate }
         ReplayCard(hero = true) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                TrackArtwork(Modifier.size(72.dp))
+                TrackArtwork(Modifier.size(88.dp), t.artworkUrl)
                 Column(Modifier.weight(1f)) {
                     Text(t.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
                     Text(t.artists, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     t.album?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
-            Text(t.status.label, color = MaterialTheme.colorScheme.primary)
+            TrackStatusBadge(t.status)
             ThresholdProgress(t.todayCount, s.dailyThreshold, "hôm nay (giờ Việt Nam)")
             ThresholdProgress(t.rolling72hCount, s.rollingThreshold, "trong 72 giờ gần nhất")
             t.qualifiedBy?.let { by ->
@@ -80,7 +87,7 @@ fun TrackDetailScreen(state: LibraryUiState, trackId: String, onRetry: () -> Uni
                 } + (t.qualifiedAtMs?.let { " · ${LibraryModel.fullTime(it)}" } ?: ""))
             }
             t.addedAtMs?.let { Text("Đã thêm vào playlist trên Spotify: ${LibraryModel.fullTime(it)}") }
-            if (t.spotifyUrl != null && onOpenUrl != null) PrimaryActionButton("Mở bài trong Spotify", { onOpenUrl(t.spotifyUrl) })
+            if (t.spotifyUrl != null && onOpenUrl != null) PrimaryActionButton("Mở bài trong Spotify", { onOpenUrl(t.spotifyUrl) }, glyph = ReplayGlyph.External)
         }
         CoverageBanner("Lượt phát Spotify ghi nhận không đồng nghĩa nghe hết bài")
         ReplayHeading("Các lượt phát (${t.playTimesMs.size})")

@@ -3,6 +3,9 @@ package com.spotifyautoplaylist.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -41,6 +44,23 @@ fun LibraryGate(state: LibraryUiState, onRetry: () -> Unit, content: @Composable
     }
 }
 
+/** One lazy scroll owner per library list; Navigation Compose saves its position per destination. */
+@Composable
+fun LibraryListPage(state: LibraryUiState, onRetry: () -> Unit, content: LazyListScope.(LibrarySnapshot) -> Unit) {
+    if (state !is LibraryUiState.Ready) { LibraryGate(state, onRetry) {}; return }
+    LazyColumn(Modifier.fillMaxSize().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 720.dp)
+        .fillMaxWidth().testTag("library-list"),
+        contentPadding = PaddingValues(horizontal = ReplayTokens.PagePadding, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        content(state.snapshot)
+        item("privacy-footer") {
+            Text("Ứng dụng cá nhân độc lập, không phải ứng dụng chính thức của Spotify.",
+                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
 /** Status strip: sync truth plus the coverage caveat; tapping opens Sync Health (Settings). */
 @Composable
 fun SyncStrip(s: LibrarySnapshot, onOpenSettings: (() -> Unit)?) {
@@ -54,7 +74,8 @@ fun SyncStrip(s: LibrarySnapshot, onOpenSettings: (() -> Unit)?) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ReplayIcon(if (problem) ReplayGlyph.Info else ReplayGlyph.Sync, Modifier.size(24.dp),
                 tint = if (problem) ReplayTokens.Warning else MaterialTheme.colorScheme.primary)
-            Text(text, color = if (problem) ReplayTokens.Warning else MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            Text(text, style = MaterialTheme.typography.bodyMedium,
+                color = if (problem) ReplayTokens.Warning else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
         }
     }
 }
@@ -74,7 +95,8 @@ fun HomeScreen(state: LibraryUiState, onRetry: () -> Unit, onOpenPlaylist: (() -
     LibraryGate(state, onRetry) { s ->
         SyncStrip(s, onOpenSettings)
         CoverageNotice(s.coverage)
-        PlaylistHero(s.playlist?.name, s.confirmedCount, onOpen = onOpenPlaylist?.takeIf { s.playlist?.url != null }) {
+        PlaylistHero(s.playlist?.name, s.confirmedCount, onOpen = onOpenPlaylist?.takeIf { s.playlist?.url != null },
+            artworkUrls = LibraryModel.newlyCollected(s).mapNotNull { it.artworkUrl }) {
             s.lastVerifiedAtMs?.let { Text("Kiểm tra playlist trên Spotify lần cuối: ${LibraryModel.time(it, s.nowMs)}",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (s.playlist == null) Text("Chưa liên kết playlist. Thiết lập playlist để bắt đầu thêm bài.", color = ReplayTokens.Warning)
@@ -86,9 +108,18 @@ fun HomeScreen(state: LibraryUiState, onRetry: () -> Unit, onOpenPlaylist: (() -
         if (near.isEmpty()) EmptyState("Chưa có bài nào gần đạt ngưỡng",
             if (s.tracks.isEmpty()) "Bài có lượt phát gần đây sẽ xuất hiện ở đây." else "Bài nghe trong 72 giờ qua sẽ xuất hiện ở đây.")
         else near.forEach { t ->
-            TrackRow(t.name, t.artists, t.status.label, onOpenTrack?.let { { it(t.trackId) } }) {
-                ThresholdProgress(t.todayCount, s.dailyThreshold, "hôm nay")
-                ThresholdProgress(t.rolling72hCount, s.rollingThreshold, "trong 72 giờ")
+            TrackRow(t.name, t.artists, "", onOpenTrack?.let { { it(t.trackId) } },
+                artworkUrl = t.artworkUrl, trackStatus = t.status, emphasized = true) {
+                val dailyCloser = s.dailyThreshold - t.todayCount <= s.rollingThreshold - t.rolling72hCount
+                if (dailyCloser) {
+                    ThresholdProgress(t.todayCount, s.dailyThreshold, "hôm nay")
+                    Text("${t.rolling72hCount}/${s.rollingThreshold} trong 72 giờ", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    ThresholdProgress(t.rolling72hCount, s.rollingThreshold, "trong 72 giờ")
+                    Text("${t.todayCount}/${s.dailyThreshold} hôm nay", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 
@@ -98,7 +129,7 @@ fun HomeScreen(state: LibraryUiState, onRetry: () -> Unit, onOpenPlaylist: (() -
             "Bài chỉ hiện ở đây sau khi playlist thật trên Spotify xác nhận đã có bài.", glyph = ReplayGlyph.Collection)
         else added.forEach { t ->
             TrackRow(t.name, t.artists, t.addedAtMs?.let { "Đã thêm ${LibraryModel.date(it)}" } ?: TrackStatus.ADDED.label,
-                onOpenTrack?.let { { it(t.trackId) } })
+                onOpenTrack?.let { { it(t.trackId) } }, artworkUrl = t.artworkUrl)
         }
 
         ReplayHeading("Nhịp nghe 7 ngày")
