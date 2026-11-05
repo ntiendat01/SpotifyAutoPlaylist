@@ -39,3 +39,4 @@
 | 050C | `02-home.png` | No Sync Now/last-sync card on Home; status strip links to Settings | Sync Now is in Settings (050G) |
 | 050C | `02-home.png` | Pulse counts are locally recorded play events, partial-coverage note when not complete | Honest coverage |
 | 050D | `03-listening-history.png` | Chips instead of segmented control; placeholder artwork; no per-row chart | Material3 stable API, no image loader |
+| 050E | `04-collection.png` | No `+100% vs last week` analytics; no artwork; chips not segmented control | Honest data only, no image loader |

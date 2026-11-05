@@ -60,6 +60,7 @@ data class TrackUiModel(
     val addedAtMs: Long?,
     val lastAttemptMs: Long?,
     val attemptCount: Int,
+    val errorCode: String? = null,
     val spotifyUrl: String?,
 ) {
     /** Missing plays to the nearer threshold; 0 when either is reached. */
@@ -110,7 +111,7 @@ object LibraryModel {
                 status = status(row?.state, q != null, near),
                 lastPlayedAtMs = played.firstOrNull(), playTimesMs = played,
                 addedAtMs = row?.addedAtMs?.takeIf { row.state == OutboxState.PRESENT },
-                lastAttemptMs = row?.lastAttemptMs, attemptCount = row?.attemptCount ?: 0,
+                lastAttemptMs = row?.lastAttemptMs, attemptCount = row?.attemptCount ?: 0, errorCode = row?.lastErrorCode,
                 spotifyUrl = trackUrl(t.uri),
             )
         }.sortedWith(compareByDescending<TrackUiModel> { it.lastPlayedAtMs ?: Long.MIN_VALUE }.thenBy { it.trackId })
@@ -190,6 +191,29 @@ object LibraryModel {
     private val MARKS = Regex("\\p{Mn}+")
     internal fun fold(text: String): String = MARKS.replace(java.text.Normalizer.normalize(text.lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD), "")
         .replace('đ', 'd')
+
+    enum class Segment(val label: String) { CONFIRMED("Đã thêm"), PENDING("Đang chờ"), REVIEW("Cần kiểm tra") }
+
+    /** Collection (06 §6): strict segregation; only PRESENT is "Đã thêm". */
+    fun collection(s: LibrarySnapshot, segment: Segment): List<TrackUiModel> = when (segment) {
+        Segment.CONFIRMED -> newlyCollected(s, Int.MAX_VALUE)
+        Segment.PENDING -> s.tracks.filter { it.status in setOf(TrackStatus.ADDING, TrackStatus.VERIFYING, TrackStatus.QUALIFIED) }
+            .sortedByDescending { it.qualifiedAtMs ?: 0 }
+        Segment.REVIEW -> s.tracks.filter { it.status == TrackStatus.NEEDS_REVIEW || it.status == TrackStatus.REMOVED_EXTERNALLY }
+    }
+
+    /** Short reason for a pending / review row; codes only, never raw messages. */
+    fun reason(t: TrackUiModel, nowMs: Long): String = when (t.status) {
+        TrackStatus.REMOVED_EXTERNALLY -> "Bài đã bị gỡ khỏi playlist trên Spotify. Ứng dụng sẽ không tự thêm lại."
+        TrackStatus.NEEDS_REVIEW -> if (t.errorCode == "ATTEMPTS_EXHAUSTED")
+            "Đã thử ${t.attemptCount} lần nhưng chưa xác minh được trên Spotify. Ứng dụng tạm dừng thêm bài này."
+            else "Không thể thêm bài tự động. Cần kiểm tra."
+        TrackStatus.VERIFYING -> "Đang chờ kiểm tra playlist trên Spotify"
+        TrackStatus.ADDING -> if (t.attemptCount > 0 && t.lastAttemptMs != null)
+            "Sẽ thử lại · ${t.attemptCount} lần thử · lần cuối ${time(t.lastAttemptMs, nowMs)}" else "Chờ lần đồng bộ tiếp theo"
+        TrackStatus.QUALIFIED -> "Đủ điều kiện · Chờ thêm vào playlist"
+        else -> t.status.label
+    }
 
     fun day(ms: Long): LocalDate = Instant.ofEpochMilli(ms).atZone(ZONE).toLocalDate()
 

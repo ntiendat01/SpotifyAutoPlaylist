@@ -206,6 +206,7 @@ Android MediaSession-assisted observation, richer statistics, multiple playlists
 - TASK-050D Implement History search/filter, Track Detail and timestamp disclaimer.
   - **PASS — 2026-11-05, JVM/Robolectric tests and local build only** ([M5-UI.md](M5-UI.md)). Not run on device, live Spotify or CI.
 - TASK-050E Implement Collection confirmed/pending/needs-review tabs with remote verification timestamps.
+  - **PASS — 2026-11-05, JVM/Robolectric tests and local build only** ([M5-UI.md](M5-UI.md)). Not run on device, live Spotify or CI.
 - TASK-050F Implement Rules Studio draft/edit/save/discard and real-data preview.
 - TASK-050G Implement Settings/Sync Health and sanitized diagnostics.
 - TASK-050H Run `UI-TC-001..018` on OnePlus; verify accessibility, offline/error states and no fake production data.

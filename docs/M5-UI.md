@@ -67,3 +67,26 @@ Deviations / limitations
 - Filter chips (FilterChip) instead of segmented buttons; neutral artwork placeholder.
 - No pagination: the whole account's history is loaded into memory per refresh (fine for a personal app; unmeasured on device).
 - Screenshots: `app/build/reports/ui/050D-history.png`, `050D-track-detail.png`.
+
+## TASK-050E — Collection
+
+**Status: PASS (JVM), 2026-11-05.** 377 tests total (+4). Build 51 s.
+
+Files
+- `LibraryModel.kt` — `Segment` (Đã thêm | Đang chờ | Cần kiểm tra), `collection()`, `reason()`; `TrackUiModel.errorCode`.
+- `ui/CollectionScreen.kt`; `ReplayFoundation.kt` routes the Collection tab to it (rows open Track Detail).
+- Tests: `CollectionModelTest` (2, JVM), `CollectionScreenTest` (2, Robolectric).
+
+State handling
+- Đã thêm = PRESENT on the current playlist only, with remote added time. Đang chờ = PENDING / SENDING /
+  RETRY_LATER / CHECKING_REMOTE / VERIFY_REMOTE and qualified-without-outbox. Cần kiểm tra = BLOCKED and
+  REMOVED_EXTERNALLY. Segments are disjoint (tested). Counts shown in each chip.
+- Header "Xác minh trên Spotify lần cuối" = last SUCCESS pass (full remote reconcile); "Chưa kiểm tra playlist trên Spotify" otherwise.
+- Reasons are fixed Vietnamese copy from state/attempts/known codes (`ATTEMPTS_EXHAUSTED`); no raw error text.
+- Empty copy per segment; loading/error/no-account via `LibraryGate`.
+
+Deviations / limitations
+- No per-row "verified at" (no column; no schema change made). No artwork collage, no weekly analytics chart.
+- No "retry now" / "re-add" actions for review rows (no supported use case; would be scope expansion).
+- Selected chip colour comes from the Material3 scheme (not Replay green).
+- Screenshots: `app/build/reports/ui/050E-collection.png`, `050E-collection-pending.png`.

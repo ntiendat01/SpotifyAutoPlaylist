@@ -70,6 +70,7 @@ fun ReplayFoundation(
                         onOpenPlaylist = onOpenPlaylist, onOpenSettings = { navigation.navigate("settings") { launchSingleTop = true } },
                         onOpenTrack = openTrack)
                     else if (!preview && library != null && tab == ReplayTab.History) HistoryScreen(library, onRetryLibrary, openTrack)
+                    else if (!preview && library != null && tab == ReplayTab.Collection) CollectionScreen(library, onRetryLibrary, onOpenPlaylist, openTrack)
                     else FoundationPage(preview, tab, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }
                 }
             }
