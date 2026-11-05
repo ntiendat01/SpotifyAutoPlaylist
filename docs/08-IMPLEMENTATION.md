@@ -140,7 +140,7 @@ history ingestion, counting or workers. Scope, tests, visual deviations and evid
     Done (JVM only): auth failures classified (offline ≠ re-auth), ACCOUNT_MISMATCH outcome, pass writer bound to
     the pass account, confirmed relink to an existing owned private playlist moving open outbox rows in one
     transaction. No schema change, no UI; not run on live Spotify/device/CI. See [M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md).
-- TASK-053 Device E2E TC-018..025, TC-029..030; verify background delays on OxygenOS.
+- TASK-053 Device E2E TC-018..025, TC-029..030; verify background delays on OxygenOS. **PREPARED, NOT EXECUTED**: runbook and results template in [M5-DEVICE-E2E.md](M5-DEVICE-E2E.md); no device/live Spotify run yet.
 - TASK-054 Produce signed release APK and manual install/update test.
   **Exit:** all release blockers cleared, docs status updated to Released.
 

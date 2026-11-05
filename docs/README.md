@@ -151,7 +151,7 @@ device/live gates remain.
 
 **TASK-051: PASS — JVM tests and local build on 2026-11-05.** WorkManager periodic and manual sync with
 per-account serialization ([M5-SYNC-WORKER.md](M5-SYNC-WORKER.md)). 330 JVM tests passed; not run against live
-Spotify, a device or CI. OxygenOS background reliability is unverified (TASK-053). No Sync Now button yet (TASK-050G).
+Spotify, a device or CI. OxygenOS background reliability is unverified (TASK-053). Sync Now exists since TASK-050G.
 
 **TASK-052: PASS — JVM tests and local build on 2026-11-05.** Failure handling and playlist relink
 ([M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md)). Not run against live Spotify, a device or CI. No relink UI yet.
@@ -177,7 +177,9 @@ Not run against live Spotify, a device or CI.
 **TASK-050I: PASS — JVM tests and local build on 2026-11-05.** Optional polish: bounded gradient and reduced-motion-aware progress ([M5-UI.md](M5-UI.md)).
 Not run against live Spotify, a device or CI.
 
-Next planned task: TASK-none in TASK-050 (M5 UI) / TASK-053, per docs/08.
+TASK-053 device E2E: PREPARED, NOT EXECUTED — runbook [M5-DEVICE-E2E.md](M5-DEVICE-E2E.md). Results pending the user's OnePlus run.
+
+Next planned task: execute TASK-053 on device (user), per docs/08.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
