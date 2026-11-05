@@ -105,6 +105,10 @@ Version 1.3.0 · Status: Baseline
     account-scoped). 8 new tests, 246 total; no schema change; not wired to workers/UI; no live
     Spotify/device/CI run. See [M4-PLAYLIST-SETUP.md](M4-PLAYLIST-SETUP.md).
 - TASK-041 Paginate remote playlist items and reconcile before write.
+  - **PASS — 2026-11-05, JVM tests and local build.** Bounded, fail-closed offset pagination; transactional,
+    account-scoped reconcile (PRESENT / PENDING / REMOVED_EXTERNALLY) behind `ManagedPlaylistVerifier`; no
+    Spotify writes, no schema change. 16 new tests, 262 total; not wired to workers/UI; no live
+    Spotify/device/CI run. See [M4-PLAYLIST-RECONCILE.md](M4-PLAYLIST-RECONCILE.md).
 - TASK-042 Implement outbox state machine, ambiguous POST verification and external removal handling.
 - TASK-043 Tests TC-012..017, TC-028.
   **Exit:** qualifying track appears exactly once in tested normal and recovery paths.

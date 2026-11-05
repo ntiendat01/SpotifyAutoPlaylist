@@ -136,7 +136,11 @@ a device or CI. HTTP and Room are covered in separate suites (see limitations th
 added a read-only pre-write re-verification gate for the stored playlist mapping. 246 JVM tests passed; not
 run against live Spotify, a device or CI. See [M4-PLAYLIST-SETUP.md](M4-PLAYLIST-SETUP.md).
 
-Next planned task: TASK-041 (remote playlist item pagination and reconcile).
+**TASK-041: PASS — JVM tests and local build on 2026-11-05.** Paginated remote membership read and
+reconcile-before-write (no Spotify writes, no schema change). 262 JVM tests passed; not run against live
+Spotify, a device or CI. See [M4-PLAYLIST-RECONCILE.md](M4-PLAYLIST-RECONCILE.md).
+
+Next planned task: TASK-042 (outbox state machine, ambiguous POST verification, external removal handling).
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

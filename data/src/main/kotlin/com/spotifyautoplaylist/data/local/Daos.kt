@@ -113,7 +113,41 @@ abstract class QualificationDao {
             "ORDER BY q.qualified_at_ms, q.track_id",
     )
     abstract suspend fun outboxInQualificationOrder(userId: String, playlistId: String): List<PlaylistOutboxEntity>
+
+    @Update protected abstract suspend fun updateOutboxRow(item: PlaylistOutboxEntity): Int
+
+    /**
+     * TASK-041 (BR-007/BR-009, 03 §5): applies one COMPLETE remote membership read of [playlistId] to the account's
+     * outbox in a single transaction (no network inside). [remoteAddedAtMs] maps every remote track ID to its
+     * `added_at` (or null). Never deletes rows and never causes a write to Spotify. See [reconcileRow].
+     */
+    @Transaction
+    open suspend fun reconcileOutbox(userId: String, playlistId: String, remoteAddedAtMs: Map<String, Long?>, nowMs: Long): List<PlaylistOutboxEntity> =
+        outboxInQualificationOrder(userId, playlistId).map { row ->
+            val next = reconcileRow(row, row.trackId in remoteAddedAtMs, remoteAddedAtMs[row.trackId], nowMs)
+            if (next != row) check(updateOutboxRow(next) == 1)
+            next
+        }
 }
+
+/**
+ * Pure TASK-041 rule for one outbox row given a complete remote read:
+ * - present remotely: PENDING/CHECKING_REMOTE/RETRY_LATER/SENDING/VERIFY_REMOTE -> PRESENT (never re-POSTed);
+ *   added_at_ms from remote `added_at`, else the verification time.
+ * - absent: PRESENT -> REMOVED_EXTERNALLY (never re-added); CHECKING_REMOTE/RETRY_LATER -> PENDING (still missing).
+ * - unchanged: PENDING absent, SENDING/VERIFY_REMOTE absent (TASK-042 decides), REMOVED_EXTERNALLY and BLOCKED
+ *   whatever the remote says (no documented transition out; tracking reset is not in v1).
+ */
+fun reconcileRow(row: PlaylistOutboxEntity, present: Boolean, remoteAddedAtMs: Long?, nowMs: Long): PlaylistOutboxEntity =
+    when (row.state) {
+        OutboxState.PENDING, OutboxState.CHECKING_REMOTE, OutboxState.RETRY_LATER,
+        OutboxState.SENDING, OutboxState.VERIFY_REMOTE ->
+            if (present) row.copy(state = OutboxState.PRESENT, addedAtMs = remoteAddedAtMs ?: row.addedAtMs ?: nowMs, lastErrorCode = null)
+            else if (row.state == OutboxState.CHECKING_REMOTE || row.state == OutboxState.RETRY_LATER) row.copy(state = OutboxState.PENDING)
+            else row
+        OutboxState.PRESENT -> if (present) row else row.copy(state = OutboxState.REMOVED_EXTERNALLY, lastAttemptMs = nowMs)
+        OutboxState.REMOVED_EXTERNALLY, OutboxState.BLOCKED -> row
+    }
 
 @Dao
 interface PlaylistDao {
