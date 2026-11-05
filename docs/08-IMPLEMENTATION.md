@@ -87,6 +87,9 @@ Version 1.3.0 · Status: Baseline
     rolling >= 5/72h); TC-001..009 covered at evaluator level (16 new tests, 210 total). Not persisted or
     wired to workers/UI (TASK-032). See [M3-QUALIFICATION.md](M3-QUALIFICATION.md).
 - TASK-032 Implement transactional qualification/outbox and threshold re-evaluation.
+  - **PASS — 2026-11-05, JVM tests and local build.** `qualifyBatch` (TX-03/TX-05) + `QualificationRecorder`;
+    TC-004/005/008/009/010 at persistence level (13 new tests, 223 total). No schema change; not wired to
+    workers/UI; no Spotify writes. See [M3-QUALIFICATION-OUTBOX.md](M3-QUALIFICATION-OUTBOX.md).
 - TASK-033 Unit and integration tests TC-001..011, TC-026, TC-027.
   **Exit:** repeated sync produces stable counts and honest coverage status.
 

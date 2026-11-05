@@ -118,7 +118,12 @@ See [M3-HISTORY-SYNC.md](M3-HISTORY-SYNC.md).
 configurable thresholds). 210 JVM tests passed; not persisted or wired yet (TASK-032).
 See [M3-QUALIFICATION.md](M3-QUALIFICATION.md).
 
-Next planned task: TASK-032, transactional qualification/outbox and threshold re-evaluation.
+**TASK-032: PASS — JVM tests and local build on 2026-11-05.** `QualificationDao.qualifyBatch` (one Room
+transaction: qualifications + PENDING outbox rows, backfill after playlist link, never delete/reset) and
+`QualificationRecorder` in `:app` (evaluate, threshold change re-evaluation). No schema change. 223 JVM
+tests passed; not wired to workers/UI; no Spotify writes. See [M3-QUALIFICATION-OUTBOX.md](M3-QUALIFICATION-OUTBOX.md).
+
+Next planned task: TASK-033, unit and integration tests TC-001..011, TC-026, TC-027.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

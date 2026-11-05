@@ -84,6 +84,35 @@ abstract class QualificationDao {
 
     @Query("SELECT * FROM qualification WHERE spotify_user_id = :userId ORDER BY qualified_at_ms, track_id")
     abstract suspend fun all(userId: String): List<QualificationEntity>
+
+    @Query(
+        "INSERT OR IGNORE INTO playlist_outbox (spotify_user_id, playlist_id, track_id, state, attempt_count) " +
+            "SELECT spotify_user_id, :playlistId, track_id, 'PENDING', 0 FROM qualification WHERE spotify_user_id = :userId",
+    )
+    protected abstract suspend fun insertMissingOutbox(userId: String, playlistId: String)
+
+    /**
+     * TASK-032 TX-03/TX-05 batch: inserts every absent qualification and, when the account's managed playlist
+     * is known, ensures each of the account's qualifications has an outbox row for it (PENDING if new). One
+     * transaction: on any failure no qualification or outbox row from the batch persists. Existing
+     * qualifications and outbox rows (any state, incl. PRESENT / REMOVED_EXTERNALLY) are never changed or
+     * deleted. Returns the newly qualified track IDs in input order.
+     */
+    @Transaction
+    open suspend fun qualifyBatch(userId: String, items: List<QualificationEntity>, playlistId: String?): List<String> {
+        require(items.all { it.spotifyUserId == userId }) { "cross-account row" }
+        val added = items.filter { insertQualification(it) != -1L }.map { it.trackId }
+        if (playlistId != null) insertMissingOutbox(userId, playlistId)
+        return added
+    }
+
+    /** Outbox rows for [playlistId] in qualification order (qualified_at_ms, track_id): the order a writer adds. */
+    @Query(
+        "SELECT o.* FROM playlist_outbox o JOIN qualification q ON q.spotify_user_id = o.spotify_user_id " +
+            "AND q.track_id = o.track_id WHERE o.spotify_user_id = :userId AND o.playlist_id = :playlistId " +
+            "ORDER BY q.qualified_at_ms, q.track_id",
+    )
+    abstract suspend fun outboxInQualificationOrder(userId: String, playlistId: String): List<PlaylistOutboxEntity>
 }
 
 @Dao
