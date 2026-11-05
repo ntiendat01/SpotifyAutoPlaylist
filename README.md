@@ -10,6 +10,9 @@ requires confirmation and GET verification of ownership/privacy. A durable creat
 POST retries after process death or uncertain results. Local auth uses Android Keystore encryption (M2).
 No client secret, token, authorization code or raw HTTP body is displayed or logged.
 
+Qualification rule (owner, 2026-11-05): **>= 3 plays in one Vietnam day OR >= 5 plays in any rolling 72 h**.
+The pure history-sync engine (TASK-030) and qualification evaluator (TASK-031) exist as tested JVM logic only.
+
 History ingestion, qualification, remote membership reconciliation, track additions and background sync
 are still M3/M4/TASK-051. The tab shell honestly shows unavailable/empty states, not sample tracks/counts.
 Matching `/me.id` does **not** prove Premium or Developer App ownership. No live Spotify integration or

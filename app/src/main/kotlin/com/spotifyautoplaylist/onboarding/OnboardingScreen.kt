@@ -203,7 +203,7 @@ private fun FeatureCard(glyph: ReplayGlyph, title: String, description: String) 
 @Composable
 private fun RuleNote() {
     ReplayCard {
-        Text("4 lượt/ngày HOẶC 5 lượt/72 giờ", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text("3 lượt/ngày HOẶC 5 lượt/72 giờ", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text("Quy tắc mặc định · Lượt phát được Spotify ghi nhận, không đồng nghĩa nghe hết bài.",
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

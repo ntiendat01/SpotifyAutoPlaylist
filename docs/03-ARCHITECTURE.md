@@ -25,7 +25,8 @@ com.example.spotifyautoplaylist/
   data/local/        Room entities, DAO, migrations, DataStore
   data/repository/   SyncRepository, PlaylistRepository
   domain/model/      PlayEvent, Track, Qualification
-  domain/rules/      Pure RuleEvaluator (no Android dependencies)
+  domain/rules/      Pure RuleEvaluator (no Android dependencies; currently
+                     `:spotify-api` `spotify/rules/QualificationEvaluator`, daily >=3 OR rolling >=5/72h)
   domain/usecase/    SyncHistory, EvaluateRules, ReconcilePlaylist
   worker/            PeriodicSyncWorker, worker scheduling
   ui/                Compose screens, ViewModels, UI states

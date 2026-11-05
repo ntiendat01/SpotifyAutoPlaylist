@@ -117,7 +117,7 @@ private fun FoundationPage(preview: Boolean, tab: ReplayTab?, playlistName: Stri
             ReplayTab.Rules -> {
                 ReplayHeading("Quy tắc")
                 ReplayCard {
-                    Text("4 lượt trong một ngày", style = MaterialTheme.typography.titleLarge)
+                    Text("3 lượt trong một ngày", style = MaterialTheme.typography.titleLarge)
                     Text("HOẶC", color = MaterialTheme.colorScheme.primary)
                     Text("5 lượt trong 72 giờ", style = MaterialTheme.typography.titleLarge)
                     Text("Quy tắc mặc định · Ngày tính theo giờ Việt Nam. 72 giờ là khoảng trượt.")

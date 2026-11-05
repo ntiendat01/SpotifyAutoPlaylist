@@ -96,7 +96,7 @@ All content surfaces must have accessibility semantics, TalkBack labels, and no 
 
 **Purpose:** explain product, permissions, Premium and where playlist lives; complete secure connection. **Entry:** first install, disconnected state, invalid account.
 
-**Layout top→bottom:** brand lockup `replay.`; hero tagline `Nhạc bạn nghe lại. Playlist tự tạo.`; short three-step illustration (Spotify plays → app counts → playlist saved on Spotify); compact rule preview `4 lượt/ngày HOẶC 5 lượt/72 giờ`; privacy note `Lịch sử lưu trên điện thoại`; Spotify connection button; link `Quyền truy cập & cách hoạt động`.
+**Layout top→bottom:** brand lockup `replay.`; hero tagline `Nhạc bạn nghe lại. Playlist tự tạo.`; short three-step illustration (Spotify plays → app counts → playlist saved on Spotify); compact rule preview `3 lượt/ngày HOẶC 5 lượt/72 giờ`; privacy note `Lịch sử lưu trên điện thoại`; Spotify connection button; link `Quyền truy cập & cách hoạt động`.
 
 **Actions:** `Kết nối Spotify` opens system browser/Custom Tab; `Thử lại` on error; `Tiếp tục` only after account validation. Playlist setup bottom sheet: create private `My Replays — AutoPlaylist` (default), or link owned playlist only if API/ownership verification supports it. Show confirmation before creation; never create on every login.
 
@@ -113,7 +113,7 @@ All content surfaces must have accessibility semantics, TalkBack labels, and no 
 1. Top bar: brand `replay.` + short subtitle; right gear opens Settings. Small account avatar only if permitted profile image available.
 2. Status strip: `Đã đồng bộ lúc HH:mm` / `Đang đồng bộ…` / `Cần đăng nhập lại` / `Có thể thiếu lịch sử`. Tap opens Sync Health.
 3. `PlaylistHero`: dark gradient + actual album collage if artwork exists; title `Your Repeat Universe`; count of **remotely confirmed playlist items**; CTA `Mở trong Spotify`; secondary `Đồng bộ ngay` (shows spinner and disables duplicate taps). If no playlist yet: setup CTA, not fake count.
-4. `Almost There` section: up to 3 unique tracks **not remotely confirmed**, sorted by closeness to either threshold then most recent play; row includes cover, name, artist, `3/4 hôm nay` and/or `4/5 trong 72 giờ`, accessible progress. If none: `Chưa có bài nào gần đạt ngưỡng`.
+4. `Almost There` section: up to 3 unique tracks **not remotely confirmed**, sorted by closeness to either threshold then most recent play; row includes cover, name, artist, `2/3 hôm nay` and/or `4/5 trong 72 giờ`, accessible progress. If none: `Chưa có bài nào gần đạt ngưỡng`.
 5. `Newly Collected`: up to 5 latest **remote confirmed** additions, with real artwork and added timestamp. If empty: helpful empty state.
 6. `Listening Pulse`: 7-day bars from **locally recorded play events**, grouped by VN calendar day. Axis labels and exact counts on tap; label `Lượt phát được Spotify ghi nhận`, not minutes listened. If coverage partial, annotate chart as partial. No chart when no events; show empty explanation.
 7. Four-tab bottom bar: Home / History / Collection / Rules.
@@ -138,7 +138,7 @@ All content surfaces must have accessibility semantics, TalkBack labels, and no 
 
 **Purpose:** make the actual Spotify playlist the star, and distinguish local intent from remote confirmation.
 
-**Layout:** hero with playlist title, cover/collage if available, count `N bài trên Spotify`, CTA `Nghe trên Spotify`; below: segmented `Đã thêm | Đang chờ | Cần kiểm tra`; search and sort `Mới thêm | Tên bài`. Each confirmed row shows artwork, song/artist, `Đã thêm DD/MM`, and `Vì 4 lượt/ngày` / `Vì 5 lượt/72 giờ` / `Cả hai` if recorded. Pending rows show last attempt and retry status; ambiguous write shows `Đang xác minh trên Spotify`.
+**Layout:** hero with playlist title, cover/collage if available, count `N bài trên Spotify`, CTA `Nghe trên Spotify`; below: segmented `Đã thêm | Đang chờ | Cần kiểm tra`; search and sort `Mới thêm | Tên bài`. Each confirmed row shows artwork, song/artist, `Đã thêm DD/MM`, and `Vì 3 lượt/ngày` / `Vì 5 lượt/72 giờ` / `Cả hai` if recorded. Pending rows show last attempt and retry status; ambiguous write shows `Đang xác minh trên Spotify`.
 
 **Data source:** remote playlist membership is authoritative; Room cache displays last verified state with verification timestamp. Never say `Đã thêm` based solely on local outbox. If user manually removes a track from Spotify, next reconciliation must reflect remote state; do not silently re-add without explicit documented policy in business rules. MVP does not delete or reorder remote items.
 
@@ -148,11 +148,11 @@ All content surfaces must have accessibility semantics, TalkBack labels, and no 
 
 **Purpose:** make the two-rule OR logic comprehensible and adjustable without technical jargon.
 
-**Layout:** title `Rules Studio`; intro `Một bài chỉ cần đạt một điều kiện`; two large cards: `Trong một ngày` numeric stepper default **4** range **2..20** and `Trong 72 giờ` numeric stepper default **5** range **2..30**. Each card has explanatory example. Between cards prominent `HOẶC`. Read-only notes: `Ngày tính theo giờ Việt Nam` and `72 giờ là khoảng trượt`.
+**Layout:** title `Rules Studio`; intro `Một bài chỉ cần đạt một điều kiện`; two large cards: `Trong một ngày` numeric stepper default **3** range **2..20** and `Trong 72 giờ` numeric stepper default **5** range **2..30**. Each card has explanatory example. Between cards prominent `HOẶC`. Read-only notes: `Ngày tính theo giờ Việt Nam` and `72 giờ là khoảng trượt`.
 
 **Preview module:** shows 2–3 **real local tracks** closest to current thresholds with progress bars; when editing, compute preview in memory without mutating database. If no local tracks, show clearly labeled hypothetical sample only in a separate `Ví dụ minh họa` panel; no fake counts presented as user's history.
 
-**Actions:** `Lưu quy tắc` enabled only when values changed and valid; `Khôi phục mặc định` resets editor to 4/5 but still requires Save; back with unsaved changes prompts `Bỏ thay đổi?`. Save writes DataStore transactionally, invokes rule re-evaluation on existing local events and updates candidates/outbox; existing playlist entries remain. Show `Đã lưu. Bài trong playlist không bị xóa.`
+**Actions:** `Lưu quy tắc` enabled only when values changed and valid; `Khôi phục mặc định` resets editor to 3/5 but still requires Save; back with unsaved changes prompts `Bỏ thay đổi?`. Save writes DataStore transactionally, invokes rule re-evaluation on existing local events and updates candidates/outbox; existing playlist entries remain. Show `Đã lưu. Bài trong playlist không bị xóa.`
 
 **MVP scope:** fixed timezone and 72-hour window; no rule scheduling, AI, or per-artist exceptions. Auto sync toggle lives in Settings, not Rules.
 
@@ -204,7 +204,7 @@ Never display `Đang nghe`, `Nghe trọn bài`, `Đã thêm` or `Đồng bộ đ
 ## 11. Accessibility, responsive and performance requirements
 
 - 360dp and larger layouts supported; 320dp should remain navigable with wrapping/scrolling. Test landscape and Android display/font size adjustments.
-- Touch targets ≥48dp; meaningful content descriptions, selected states and progress semantics for TalkBack; progress text e.g. `Ba trên bốn lượt hôm nay`.
+- Touch targets ≥48dp; meaningful content descriptions, selected states and progress semantics for TalkBack; progress text e.g. `Hai trên ba lượt hôm nay`.
 - Dynamic color is **disabled** by default to preserve dark Replay identity; user system high-contrast and reduced motion still honored.
 - Screen content should render from cached Room data without waiting for network; loading only for truly unavailable fields. No synchronous artwork decoding on main thread.
 - 7-day chart and lists should not trigger network per row; paginate/virtualize long lists with `LazyColumn`. Do not run continuous animations in background.
@@ -217,14 +217,14 @@ Never display `Đang nghe`, `Nghe trọn bài`, `Đã thêm` or `Đồng bộ đ
 | UI-TC-001 | Onboarding | First launch | Rules, privacy, login CTA and playlist destination clearly explained |
 | UI-TC-002 | Onboarding | OAuth denied / wrong account | Clear error and retry; no data cross-contamination |
 | UI-TC-003 | Home | Zero history and no playlist items | Honest empty state, no invented counts or artwork |
-| UI-TC-004 | Home | 3/4 daily; 4/5 rolling | Accurate progress and `Almost There` |
+| UI-TC-004 | Home | 2/3 daily; 4/5 rolling | Accurate progress and `Almost There` |
 | UI-TC-005 | Home | Partial coverage | Warning visible alongside all relevant metrics/chart |
 | UI-TC-006 | Home | Tap sync twice | One in-flight sync; feedback and truthful completion |
 | UI-TC-007 | History | Search/filter + back | Correct local results, state restored |
 | UI-TC-008 | History | Track detail | Accurate local timestamps and disclaimer |
 | UI-TC-009 | Collection | Remote write pending/ambiguous | No premature `Đã thêm` |
 | UI-TC-010 | Collection | Open Spotify unavailable | Browser fallback or actionable error |
-| UI-TC-011 | Rules | Change 4→3 then save | Preview updates, persisted rule reevaluated, remote entries retained |
+| UI-TC-011 | Rules | Change 3→2 then save | Preview updates, persisted rule reevaluated, remote entries retained |
 | UI-TC-012 | Rules | Unsaved edits + back | Confirmation, no silent save |
 | UI-TC-013 | Settings | Offline, 401, 429, quota | Correct distinct messaging and recovery |
 | UI-TC-014 | Settings | Disconnect / switch account | Confirmation, credentials cleared, account isolation preserved |

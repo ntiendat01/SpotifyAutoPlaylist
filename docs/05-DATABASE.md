@@ -47,7 +47,7 @@ See [M0-API-SPIKE.md](M0-API-SPIKE.md).
 - Cursor is resumable page progress, not proof of complete history.
 
 ### `settings` (DataStore, account scoped)
-- `daily_threshold INT = 4`, `rolling_threshold INT = 5`, `rolling_window_hours INT = 72` (fixed in v1)
+- `daily_threshold INT = 3`, `rolling_threshold INT = 5`, `rolling_window_hours INT = 72` (fixed in v1)
 - `auto_sync_enabled BOOLEAN = true`, `playlist_name STRING`, `timezone STRING = Asia/Ho_Chi_Minh` (fixed v1)
 - Validate thresholds in UI and domain: daily 2..20, rolling 2..30; reject invalid values. Thresholds are inclusive.
 

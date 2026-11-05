@@ -125,14 +125,14 @@ class ReplayDatabaseTest {
         try {
             val settings = SettingsRepository.create(File(dir, "settings.preferences_pb"))
             val key = AccountKey(USER_A, "a".repeat(64))
-            settings.update(key) { it.copy(dailyThreshold = 3) }
+            settings.update(key) { it.copy(dailyThreshold = 4) }
             val reset = LocalDataReset(db, settings)
             reset.reset()
             reset.reset()
             for (table in listOf("account", "tracks", "play_events", "qualification", "managed_playlist", "playlist_outbox", "sync_state")) {
                 assertEquals("$table not empty", "0", strings("SELECT COUNT(*) FROM $table").single())
             }
-            assertEquals(4, settings.current(key).dailyThreshold)
+            assertEquals(3, settings.current(key).dailyThreshold)
         } finally {
             dir.deleteRecursively()
         }

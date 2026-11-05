@@ -50,7 +50,7 @@ resolve to the 1.8.21 empty compatibility shells and `kotlin-stdlib-common` is d
   `importPage` rejects rows from another account before writing.
 
 ## Settings
-`AccountSettings` defaults: daily 4, rolling 5, auto sync on, playlist name "My Replays — AutoPlaylist".
+`AccountSettings` defaults: daily 3 (changed from 4 on 2026-11-05, owner decision; see README change log), rolling 5, auto sync on, playlist name "My Replays — AutoPlaylist".
 Validation: daily 2..20, rolling 2..30, name non-blank and ≤ 100 characters; invalid values throw and
 nothing is written. Rolling window 72 h and time zone `Asia/Ho_Chi_Minh` are constants (fixed in v1).
 Values are stored with the owning account hash; another account reads defaults, never the previous values.

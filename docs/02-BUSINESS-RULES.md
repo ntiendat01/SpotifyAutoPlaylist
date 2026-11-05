@@ -8,7 +8,7 @@ A valid event `PlayEvent(userId, trackId, playedAt: Instant)` is one item return
 ## Rules
 | ID | Exact behavior |
 |---|---|
-| BR-001 | **Daily:** `count(track, localDate D, Asia/Ho_Chi_Minh) >= dailyThreshold` (default 4) qualifies the track. Calendar day is `[D 00:00, D+1 00:00)` local. |
+| BR-001 | **Daily:** `count(track, localDate D, Asia/Ho_Chi_Minh) >= dailyThreshold` (default 3) qualifies the track. Calendar day is `[D 00:00, D+1 00:00)` local. |
 | BR-002 | **Rolling:** any interval `(t - 72 hours, t]` ending at a recorded event time `t` containing >= rollingThreshold (default 5) events of same track qualifies. At exact `t - 72h` event is excluded; at `t` included. |
 | BR-003 | Eligibility is BR-001 **OR** BR-002. Evaluate after ingesting a batch, including historical event times, so late sync does not discard a previously crossed threshold. |
 | BR-004 | Deduplicate imported events using `(user_id, track_id, played_at_ms)` unique index. Acknowledge possible collisions if same track has identical millisecond timestamps; source lacks a guaranteed unique play ID. |
@@ -36,14 +36,14 @@ Complexity O(n log n) per track for sort; O(n) scan after sort. Use `java.time` 
 ## Boundary examples
 | Case | Event distribution | Expected |
 |---|---|---|
-| EX-001 | 3 events same VN day | Not qualified |
-| EX-002 | 4 events same VN day | Qualified at fourth event |
-| EX-003 | 3 events 23:59 day D, 1 event 00:01 day D+1 | Not daily-qualified (unless rolling >=5) |
+| EX-001 | 2 events same VN day | Not qualified |
+| EX-002 | 3 events same VN day | Qualified at third event |
+| EX-003 | 2 events by 23:59 day D, 1 event 00:01 day D+1 | Not daily-qualified (unless rolling >=5) |
 | EX-004 | 2 events D-2, 2 events D-1, 1 event D within 72h | Rolling-qualified at fifth |
 | EX-005 | 5th event exactly 72h after 1st, with only 4 in `(t-72h,t]` | Not rolling-qualified |
 | EX-006 | Same event fetched twice | Count once |
-| EX-007 | Four historical events imported after midnight | Still daily-qualified for original day |
-| EX-008 | User changes 4/day to 3/day | Previously stored three-event day now qualifies; never remove existing |
+| EX-007 | Three historical events imported after midnight | Still daily-qualified for original day |
+| EX-008 | User changes 3/day to 2/day | Previously stored two-event day now qualifies; never remove existing |
 | EX-009 | Track already in Spotify playlist manually | Mark PRESENT; no POST |
 | EX-010 | POST succeeded but response timed out | Re-read remote before retry |
 

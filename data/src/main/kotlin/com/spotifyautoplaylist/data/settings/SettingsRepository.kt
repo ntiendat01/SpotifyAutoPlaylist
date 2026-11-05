@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 
 /** Account-scoped settings (docs/05-DATABASE.md). Thresholds are inclusive; window and time zone are fixed in v1. */
 data class AccountSettings(
-    val dailyThreshold: Int = 4,
+    val dailyThreshold: Int = 3,
     val rollingThreshold: Int = 5,
     val autoSyncEnabled: Boolean = true,
     val playlistName: String = DEFAULT_PLAYLIST_NAME,

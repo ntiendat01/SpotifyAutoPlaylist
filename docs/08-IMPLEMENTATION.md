@@ -83,6 +83,9 @@ Version 1.3.0 · Status: Baseline
     TC-026, TC-027 covered at sync level (15 new tests, 194 total). Not run against live Spotify; not wired
     to workers/UI. See [M3-HISTORY-SYNC.md](M3-HISTORY-SYNC.md).
 - TASK-031 Implement pure daily and rolling qualification evaluator.
+  - **PASS — 2026-11-05, JVM tests and local build.** `QualificationEvaluator` (daily >= 3 VN day OR
+    rolling >= 5/72h); TC-001..009 covered at evaluator level (16 new tests, 210 total). Not persisted or
+    wired to workers/UI (TASK-032). See [M3-QUALIFICATION.md](M3-QUALIFICATION.md).
 - TASK-032 Implement transactional qualification/outbox and threshold re-evaluation.
 - TASK-033 Unit and integration tests TC-001..011, TC-026, TC-027.
   **Exit:** repeated sync produces stable counts and honest coverage status.

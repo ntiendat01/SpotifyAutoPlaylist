@@ -17,7 +17,7 @@ Use `docs/06-UI-UX.md`, `docs/02-BUSINESS-RULES.md`, and `docs/04-SPOTIFY-API.md
 | UI-01: Home Dashboard | [`02-home.png`](../design/reference/02-home.webp) | `TASK-050C` | Open in Spotify / Sync now | default tab, real counts, near-threshold songs, coverage |
 | UI-02: Listening History | [`03-listening-history.png`](../design/reference/03-listening-history.webp) | `TASK-050D` | search / filter / detail | chronological plays, progress and partial coverage |
 | UI-03: Collection | [`04-collection.png`](../design/reference/04-collection.webp) | `TASK-050E` | Added / Pending / Needs Review | remote playlist verification authoritative |
-| UI-04: Rules Studio | [`05-rules-studio.png`](../design/reference/05-rules-studio.webp) | `TASK-050F` | edit thresholds / save | 4/day OR 5/72h defaults, retained songs |
+| UI-04: Rules Studio | [`05-rules-studio.png`](../design/reference/05-rules-studio.webp) | `TASK-050F` | edit thresholds / save | 3/day OR 5/72h defaults, retained songs |
 | UI-05: Settings & Sync Health | [`06-settings-sync-health.png`](../design/reference/06-settings-sync-health.webp) | `TASK-050G` | Run Sync Now / reconnect | account, diagnostics, error and offline states |
 | UI-06: Sync Result | [`07-sync-complete.png`](../design/reference/07-sync-complete.webp) | `TASK-050G + TASK-051` | View Collection / Open Spotify | only show success after confirmed remote writes |
 
@@ -74,7 +74,7 @@ flowchart TD
   F --> G[Manual or best-effort scheduled sync]
   G --> H[Read Spotify Recently Played]
   H --> I[Deduplicate and persist events in Room]
-  I --> J{4 plays in day OR 5 in rolling 72h?}
+  I --> J{3 plays in day OR 5 in rolling 72h?}
   J -- No --> K[History / Almost There]
   J -- Yes --> L[Queue candidate and reconcile remote playlist]
   L --> M{Remote confirms membership?}

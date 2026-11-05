@@ -37,15 +37,15 @@ checks and sync/outbox E2E cases remain open. See [M2-SPOTIFY-API.md](M2-SPOTIFY
 ## 2. Core cases
 | ID | Type | Scenario | Expected |
 |---|---|---|---|
-| TC-001 | Unit | 3 plays on one VN day | Not qualified |
-| TC-002 | Unit | 4 plays on one VN day | Qualified at fourth |
-| TC-003 | Unit | 3 plays at 23:59 D and 1 at 00:01 D+1 | No daily qualification |
+| TC-001 | Unit | 2 plays on one VN day | Not qualified |
+| TC-002 | Unit | 3 plays on one VN day | Qualified at third |
+| TC-003 | Unit | 2 plays by 23:59 D and 1 at 00:01 D+1 | No daily qualification |
 | TC-004 | Unit | 5 events across days within 72h, max 2/day | Rolling qualification |
 | TC-005 | Unit | Duplicate same track/timestamp imported twice | Count once |
 | TC-006 | Unit | Same name but different Spotify track IDs | Separate counts |
 | TC-007 | Unit | Fifth event exactly 72h after first | First excluded; if 4 remain, not qualified |
 | TC-008 | Unit | Late sync after calendar day ends | Historic qualification retained |
-| TC-009 | Unit | Change daily threshold 4→3 | Recompute, add new qualifying; no removal |
+| TC-009 | Unit | Change daily threshold 3→2 | Recompute, add new qualifying; no removal |
 | TC-010 | Integration | Same 50-event page fetched twice | Unique event count unchanged |
 | TC-011 | Integration | Multiple pages + overlapping watermark | All accessible events imported once |
 | TC-012 | Integration | Track already present in remote playlist | No POST, state PRESENT |

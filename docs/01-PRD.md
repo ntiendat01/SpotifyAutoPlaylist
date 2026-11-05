@@ -44,8 +44,8 @@ Spotify recommendations do not directly implement the user's personal repeat-lis
 
 ## 5. User stories
 - US-001: As the user, I connect Spotify once so the app can manage my playlist.
-- US-002: As the user, when I replay a song 4 times in a Vietnam calendar day, it is added automatically after a successful sync.
-- US-003: As the user, when I replay a song 5 times within 72 hours, it is added even without 4 plays in any one day.
+- US-002: As the user, when I replay a song 3 times in a Vietnam calendar day, it is added automatically after a successful sync.
+- US-003: As the user, when I replay a song 5 times within 72 hours, it is added even without 3 plays in any one day.
 - US-004: As the user, a song remains in my Spotify playlist after it stops qualifying or after I uninstall the app.
 - US-005: As the user, I can see the last successful sync and whether history is incomplete.
 - US-006: As the user, I can choose Sync Now to catch up after background execution is delayed.

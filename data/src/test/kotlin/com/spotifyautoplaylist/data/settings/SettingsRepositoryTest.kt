@@ -18,7 +18,7 @@ class SettingsRepositoryTest {
 
     @Test fun `defaults follow 05-DATABASE with fixed window and time zone`() = runBlocking<Unit> {
         val defaults = settings.current(accountA)
-        assertEquals(4, defaults.dailyThreshold)
+        assertEquals(3, defaults.dailyThreshold)
         assertEquals(5, defaults.rollingThreshold)
         assertEquals(72, defaults.rollingWindowHours)
         assertEquals("Asia/Ho_Chi_Minh", defaults.timeZone)
@@ -37,22 +37,22 @@ class SettingsRepositoryTest {
     }
 
     @Test fun `invalid values are rejected and nothing is written`() = runBlocking<Unit> {
-        settings.update(accountA) { it.copy(dailyThreshold = 3) }
+        settings.update(accountA) { it.copy(dailyThreshold = 4) }
         for (invalid in listOf<(AccountSettings) -> AccountSettings>(
             { it.copy(dailyThreshold = 1) }, { it.copy(dailyThreshold = 21) },
             { it.copy(rollingThreshold = 1) }, { it.copy(rollingThreshold = 31) }, { it.copy(playlistName = " ") },
         )) {
             assertThrows(IllegalArgumentException::class.java) { runBlocking { settings.update(accountA, invalid) } }
         }
-        assertEquals(3, settings.current(accountA).dailyThreshold)
+        assertEquals(4, settings.current(accountA).dailyThreshold)
     }
 
     @Test fun `another account never sees or inherits previous settings`() = runBlocking<Unit> {
-        settings.update(accountA) { it.copy(dailyThreshold = 3, playlistName = "Mine") }
+        settings.update(accountA) { it.copy(dailyThreshold = 4, playlistName = "Mine") }
         assertEquals(AccountSettings(), settings.current(accountB))
         settings.update(accountB) { it.copy(rollingThreshold = 6) }
         val b = settings.current(accountB)
-        assertEquals(4, b.dailyThreshold)
+        assertEquals(3, b.dailyThreshold)
         assertEquals(AccountSettings.DEFAULT_PLAYLIST_NAME, b.playlistName)
         assertEquals(AccountSettings(), settings.current(accountA))
         settings.clear()

@@ -10,7 +10,7 @@
 | Setup screen with bottom tabs active before login | **Corrected:** hide app bottom tabs until authenticated and setup completed. |
 | Settings screenshot labels playlist `Public` | **Corrected:** default is **Private**; show real privacy only after API confirms. |
 | Settings screenshot `Premium` badge | Only show if actually verified. Never infer access from UI or assume another account's Premium qualifies app owner. |
-| Rules screen plus/minus and auto-add toggle | Thresholds are editable in v1.2 (default 4/day and 5/72h); **auto-add toggle is NOT an independent control in v1.2**. Either remove or replace with explanatory info. Auto-sync toggle belongs in Settings. |
+| Rules screen plus/minus and auto-add toggle | Thresholds are editable in v1.2 (default 3/day and 5/72h); **auto-add toggle is NOT an independent control in v1.2**. Either remove or replace with explanatory info. Auto-sync toggle belongs in Settings. |
 | Rules screen progress rings 4/4 and 4/5 | Rings represent a **specific track's** actual recent events, not global threshold progress. Use per-track data or sample explicitly labelled demo. |
 | Settings screenshot notification toggle | **Not in MVP** per UI scope boundaries; omit or mark future-only, not a working fake switch. |
 | Sync Complete shows exact next sync `Tomorrow, 10:00 AM` | **Corrected:** WorkManager is best-effort; don't promise an exact run time. Display `Tự động đồng bộ định kỳ (không bảo đảm thời điểm)` or similar. |
@@ -24,7 +24,7 @@
 
 ## Business invariants (source of truth)
 
-- `>=4` distinct play events in Vietnam calendar day **OR** `>=5` in rolling 72h; inclusion at boundary, no false complete-play claims.
+- `>=3` distinct play events in Vietnam calendar day **OR** `>=5` in rolling 72h; inclusion at boundary, no false complete-play claims.
 - Once added, never auto-delete the track from the playlist. Never confirm `Added` merely from local pending status.
 - External playlist is the real product. Never use the rendered visual reference file as a UI screenshot background.
 - Account isolation and Premium/Developer App gates remain governed by `AUTH-006` and actual Spotify API feasibility.

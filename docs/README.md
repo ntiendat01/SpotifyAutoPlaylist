@@ -6,7 +6,7 @@
 ## Product at a glance
 Spotify AutoPlaylist is a personal, non-commercial Android application. It observes play events made available by Spotify's Recently Played API, applies repeat-listening rules, and **adds qualifying Spotify tracks to one real, private Spotify playlist**. The playlist persists after uninstall. The app never removes items automatically.
 
-**Rules (inclusive):** >= 4 play events in a Vietnam calendar day **OR** >= 5 play events in any rolling 72-hour interval. A Spotify play event is not proof of a complete listen.
+**Rules (inclusive):** >= 3 play events in a Vietnam calendar day **OR** >= 5 play events in any rolling 72-hour interval. A Spotify play event is not proof of a complete listen.
 
 ## Documentation map
 
@@ -113,7 +113,12 @@ high-water advanced only after bridging or a first baseline, gap → `HISTORY_IN
 adapter in `:app`. 194 JVM tests passed; no live API call, worker or UI wiring yet.
 See [M3-HISTORY-SYNC.md](M3-HISTORY-SYNC.md).
 
-Next planned task: TASK-031, pure daily and rolling qualification evaluator.
+**TASK-031: PASS — JVM tests and local build on 2026-11-05.** Pure qualification evaluator in
+`:spotify-api` (daily >= 3 per Vietnam day OR rolling >= 5 in `(t-72h, t]`, dedup, account filter,
+configurable thresholds). 210 JVM tests passed; not persisted or wired yet (TASK-032).
+See [M3-QUALIFICATION.md](M3-QUALIFICATION.md).
+
+Next planned task: TASK-032, transactional qualification/outbox and threshold re-evaluation.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
@@ -135,6 +140,15 @@ qualification, membership/outbox and background sync remain open. This does not 
 - https://developer.spotify.com/documentation/web-api/concepts/redirect_uri
 - https://developer.spotify.com/documentation/web-api/references/changes/february-2026
 - https://developer.spotify.com/blog/2026-07-23-web-api-quota-updates
+
+## 2026-11-05 rule change log
+- **Owner decision:** daily threshold default changed from **>= 4** to **>= 3** play events per Vietnam
+  calendar day (inclusive). Rolling **>= 5 in 72 h** unchanged; rules still combined with OR; Vietnam-day
+  boundary semantics unchanged.
+- Updated PRD, business rules (BR-001, EX-001..003, EX-007, EX-008), database, UI/UX, test plan
+  (TC-001..003, TC-009), visual docs, `AccountSettings` default, onboarding/home UI strings and tests.
+- Room schema reviewed: no change (thresholds are in DataStore). Stored DataStore thresholds are not
+  rewritten; the new default applies only when none is stored.
 
 ## v1.2 design change log
 - Adopted **Spotify Neo × Replay Lab** design direction; upgraded `06-UI-UX.md` with full screen contracts and 18 UI tests.
