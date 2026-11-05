@@ -6,6 +6,18 @@
 
 ## 0. Product and design intent
 
+**Owner-authorized UI refresh (2026-11-05):** implement the presentation improvements in
+`UI-REVIEW-2026-11-05.md` as one UI-only task, preserving existing workflows. Complete Material color
+roles, render stored Spotify artwork, reduce card/list density, improve responsive direct filters,
+Rules typography, Settings hierarchy and onboarding copy. Four tabs/routes, direct filter choices,
+OAuth, setup create/link confirmations, sync location/scheduling, rule save/discard and disconnect
+behavior stay as implemented. No new API calls except anonymous artwork fetches from stored CDN URLs;
+no database/schema/counting/outbox/auth changes. Artwork uses a bounded memory-only cache (8 MiB),
+bounded downloads (2 MiB), decode size ≤512px, HTTPS Spotify CDN only, no credentials/redirects/logs.
+History/Collection get one lazy scroll owner with stable track IDs; theme remains emerald dark.
+Diagnostics details may collapse, while Copy remains directly available. Keep inline save and direct
+create/link forms; defer review suggestions introducing filter sheets, pinned actions or new sync states.
+
 **Exact design references (v1.3):** see [`UI-VISUAL-REFERENCE.md`](UI-VISUAL-REFERENCE.md) and eight source PNGs in [`../design/reference/`](../design/reference/). All visual references must be reviewed alongside [`UI-VISUAL-DEVIATIONS.md`](UI-VISUAL-DEVIATIONS.md), which resolves conceptual-image vs. actual-MVP conflicts. For Codex use [`UI-CODEX-PROMPTS.md`](UI-CODEX-PROMPTS.md).
 
 **Brand working name:** `replay.` (product/project remains **Spotify AutoPlaylist**). Independent personal utility; never imply an official Spotify app or use Spotify's logo as our own mark. Display Spotify attribution where required by Spotify platform/branding rules. No audio streaming or playback controls in MVP.

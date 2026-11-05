@@ -84,20 +84,17 @@ internal fun OnboardingContent(
                         label = { Text("Tên playlist") }, enabled = !state.busy && !state.recoveryRequired,
                         supportingText = { Text("Từ 1 đến 100 ký tự. Bạn có thể đổi tên trong Spotify.") },
                         isError = state.playlistName.trim().length !in 1..100)
-                    ReplayCard {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             ReplayIcon(ReplayGlyph.Lock, Modifier.size(24.dp))
-                            Text("Quyền riêng tư", style = MaterialTheme.typography.titleMedium)
-                        }
-                        Text("App chỉ chấp nhận playlist riêng tư, thuộc tài khoản đã xác minh.")
+                            Text("Playlist riêng tư, thuộc tài khoản đã xác minh.", style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     RuleNote()
-                    CoverageBanner("Bản kiểm tra này chưa tự động đồng bộ hoặc thêm bài. Playlist có thể được tạo và mở trong Spotify.")
                     if (state.recoveryRequired) {
                         CoverageBanner("Đã ghi nhận yêu cầu tạo trước đó. Xác minh lại để tránh tạo playlist trùng.")
-                        PrimaryActionButton("Xác minh lại playlist", onRecover, busy = state.busy)
+                        PrimaryActionButton("Xác minh lại playlist", onRecover, busy = state.busy, glyph = ReplayGlyph.Sync)
                     } else PrimaryActionButton("Tạo playlist riêng tư", { confirm = "create" },
-                        enabled = state.playlistName.trim().length in 1..100, busy = state.busy)
+                        enabled = state.playlistName.trim().length in 1..100, busy = state.busy, glyph = ReplayGlyph.Collection)
                     if (state.busy) Text("Đang kiểm tra và lưu thiết lập…", modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                     HorizontalDivider(color = ReplayTokens.Stroke)
                     ReplayHeading("Đã có playlist?")
@@ -132,7 +129,6 @@ internal fun OnboardingContent(
                     TextButton(onClick = { showPermissions = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Quyền truy cập & cách hoạt động") }
                     Text("Cần tài khoản Spotify Premium đã thiết lập cho ứng dụng.", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                    CoverageBanner("Bản kiểm tra giao diện · Tự động đồng bộ và thêm bài chưa sẵn sàng.")
                 }
             }
             ReplayWave()
@@ -176,7 +172,7 @@ private fun WelcomeActions(state: OnboardingUiState, onConnect: () -> Unit, onCa
                 OnboardingStage.WAITING -> "Đang chờ trình duyệt…"
                 OnboardingStage.VERIFYING -> "Đang xác minh tài khoản…"
                 else -> "Kết nối Spotify"
-            }, onConnect, enabled = state.configured, busy = state.busy)
+            }, onConnect, enabled = state.configured, busy = state.busy, glyph = ReplayGlyph.External)
             if (state.stage == OnboardingStage.WAITING) TextButton(onClick = onCancel,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Hủy đăng nhập") }
             else if (!state.busy) TextButton(onClick = onPreview,
@@ -187,22 +183,20 @@ private fun WelcomeActions(state: OnboardingUiState, onConnect: () -> Unit, onCa
 
 @Composable
 private fun FeatureCard(glyph: ReplayGlyph, title: String, description: String) {
-    ReplayCard {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                ReplayIcon(glyph, Modifier.size(28.dp))
+            Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                ReplayIcon(glyph, Modifier.size(24.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-    }
 }
 
 @Composable
 private fun RuleNote() {
-    ReplayCard {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("3 lượt/ngày HOẶC 5 lượt/72 giờ", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text("Quy tắc mặc định · Lượt phát được Spotify ghi nhận, không đồng nghĩa nghe hết bài.",
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

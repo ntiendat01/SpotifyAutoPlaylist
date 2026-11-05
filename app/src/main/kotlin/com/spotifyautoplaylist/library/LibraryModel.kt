@@ -64,6 +64,7 @@ data class TrackUiModel(
     val attemptCount: Int,
     val errorCode: String? = null,
     val spotifyUrl: String?,
+    val artworkUrl: String? = null,
 ) {
     /** Missing plays to the nearer threshold; 0 when either is reached. */
     fun remaining(daily: Int, rolling: Int) = minOf(daily - todayCount, rolling - rolling72hCount).coerceAtLeast(0)
@@ -120,6 +121,7 @@ object LibraryModel {
                 addedAtMs = row?.addedAtMs?.takeIf { row.state == OutboxState.PRESENT },
                 lastAttemptMs = row?.lastAttemptMs, attemptCount = row?.attemptCount ?: 0, errorCode = row?.lastErrorCode,
                 spotifyUrl = trackUrl(t.uri),
+                artworkUrl = t.imageUrl,
             )
         }.sortedWith(compareByDescending<TrackUiModel> { it.lastPlayedAtMs ?: Long.MIN_VALUE }.thenBy { it.trackId })
         val present = outbox.values.count { it.state == OutboxState.PRESENT }

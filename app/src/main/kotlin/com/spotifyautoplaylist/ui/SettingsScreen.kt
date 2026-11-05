@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -54,17 +55,35 @@ fun SettingsScreen(state: LibraryUiState, onRetry: () -> Unit, actions: Settings
         val scope = rememberCoroutineScope()
         val st = s.status
         ReplayHeading("Cài đặt")
+        ReplayCard {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ReplayIcon(ReplayGlyph.Collection, Modifier.size(24.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(s.playlist?.name ?: "Playlist Spotify", style = MaterialTheme.typography.titleMedium)
+                    Text(if (onDisconnect != null) "Đã kết nối Spotify" else "Chưa kết nối Spotify",
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (onOpenPlaylist != null) OutlinedButton(onClick = onOpenPlaylist, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text("Mở playlist trong Spotify", Modifier.weight(1f))
+                ReplayIcon(ReplayGlyph.External, Modifier.size(20.dp))
+            }
+        }
         ReplayHeading("Sức khỏe đồng bộ")
         ReplayCard(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
             Text(SyncCopy.headline(st, s.nowMs), style = MaterialTheme.typography.titleMedium,
                 color = if (SyncCopy.isProblem(st)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
-            Text("Lần thành công gần nhất: " + (st.lastSuccessAtMs?.let { LibraryModel.time(it, s.nowMs) } ?: "chưa có"))
+            if (st.outcome != "SUCCESS") Text("Lần thành công gần nhất: " + (st.lastSuccessAtMs?.let { LibraryModel.time(it, s.nowMs) } ?: "chưa có"),
+                style = MaterialTheme.typography.bodyMedium)
             st.blockedUntilMs?.takeIf { it > s.nowMs }?.let { Text("Tạm dừng đến ${LibraryModel.time(it, s.nowMs)}") }
             if (st.outcome != null) Text("Lần chạy gần nhất: nhập ${st.imported} lượt phát · ${st.newlyQualified} bài mới đủ điều kiện",
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             val q = Diagnostics.queue(s)
-            Text("Đã thêm (đã xác minh) ${q[TrackStatus.ADDED]} · Đang chờ ${q[TrackStatus.ADDING]} · Đang xác minh ${q[TrackStatus.VERIFYING]} · Cần kiểm tra ${q[TrackStatus.NEEDS_REVIEW]}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Text("Đã thêm (đã xác minh) ${q[TrackStatus.ADDED]} · Đang chờ ${q[TrackStatus.ADDING]}",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
+            Text("Đang xác minh ${q[TrackStatus.VERIFYING]} · Cần kiểm tra ${q[TrackStatus.NEEDS_REVIEW]}",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (s.coverage != Coverage.COMPLETE_SINCE_BASELINE) CoverageNotice(s.coverage)
 
@@ -82,7 +101,7 @@ fun SettingsScreen(state: LibraryUiState, onRetry: () -> Unit, actions: Settings
                 catch (_: Exception) { syncError = "Không yêu cầu đồng bộ được. Thử lại." }
                 finally { requesting = false }
             }
-        }, enabled = actions != null && !requesting, busy = requesting)
+        }, enabled = actions != null && !requesting, busy = requesting, glyph = ReplayGlyph.Sync)
         if (actions == null) Text("Bản dựng này chưa cấu hình Spotify nên không thể đồng bộ.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         requestedAt?.let { at ->
             val done = (st.finishedAtMs ?: 0) >= at
@@ -102,15 +121,19 @@ fun SettingsScreen(state: LibraryUiState, onRetry: () -> Unit, actions: Settings
         ReplayHeading("Chẩn đoán")
         val diag = remember(s, version) { Diagnostics.text(s, version) }
         val clipboard = LocalClipboardManager.current
+        var expanded by rememberSaveable { mutableStateOf(false) }
         ReplayCard {
-            Text("Chỉ gồm mã trạng thái, số lượng và thời gian. Không có mã bài hát, tên, liên kết hay token.",
+            Text("Thông tin kỹ thuật để kiểm tra kết nối và đồng bộ.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            SelectionContainer { Text(diag, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
+            OutlinedButton(onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                .semantics { stateDescription = if (expanded) "Đã mở rộng" else "Đã thu gọn" }) {
+                Text(if (expanded) "Ẩn chi tiết chẩn đoán" else "Xem chi tiết chẩn đoán")
+            }
+            if (expanded) SelectionContainer { Text(diag, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
             TextButton(onClick = { clipboard.setText(AnnotatedString(diag)) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Sao chép chẩn đoán") }
         }
 
         ReplayHeading("Tài khoản")
-        if (onOpenPlaylist != null) OutlinedButton(onClick = onOpenPlaylist, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Mở playlist trong Spotify") }
         if (onDisconnect != null) {
             Text("Đã kết nối Spotify. Playlist vẫn được giữ trong Spotify khi ngắt kết nối.")
             OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Ngắt kết nối Spotify") }

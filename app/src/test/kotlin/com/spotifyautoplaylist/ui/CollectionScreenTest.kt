@@ -36,7 +36,7 @@ class CollectionScreenTest {
         compose.onNodeWithText("Bài thử D").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Bài thử C").assertDoesNotExist()
         compose.capture("050E-collection-pending")
-        compose.onNodeWithText("Cần kiểm tra (1)").performClick()
+        compose.onNodeWithText("Cần kiểm tra (1)").performScrollTo().performClick()
         compose.onNodeWithText("Bài thử E").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Ứng dụng không bao giờ tự xóa bài khỏi playlist.").performScrollTo().assertIsDisplayed()
     }
@@ -46,7 +46,7 @@ class CollectionScreenTest {
         compose.onNodeWithText("Chưa xác minh số bài trên Spotify").assertIsDisplayed()
         compose.onNodeWithText("Chưa kiểm tra playlist trên Spotify").assertIsDisplayed()
         compose.onNodeWithText("Chưa có bài đã xác minh trên Spotify").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Cần kiểm tra (0)").performClick()
+        compose.onNodeWithText("Cần kiểm tra (0)").performScrollTo().performClick()
         compose.onNodeWithText("Không có bài cần kiểm tra").assertIsDisplayed()
     }
 }

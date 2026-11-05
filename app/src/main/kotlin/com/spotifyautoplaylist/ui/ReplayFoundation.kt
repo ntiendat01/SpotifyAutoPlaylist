@@ -105,11 +105,11 @@ private fun FoundationPage(preview: Boolean, tab: ReplayTab?, playlistName: Stri
         .verticalScroll(rememberScrollState()).padding(horizontal = ReplayTokens.PagePadding, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(ReplayTokens.SectionGap)) {
         if (preview) CoverageBanner("Xem trước giao diện · Không kết nối Spotify. Không có dữ liệu tài khoản.")
-        else CoverageBanner("Bản kiểm tra giao diện · Chưa bật đồng bộ và tự động thêm bài.")
+        else CoverageBanner("Chưa có dữ liệu đồng bộ để hiển thị.")
         when (tab) {
             null -> {
                 ReplayHeading("Cài đặt")
-                EmptyState("Đồng bộ chưa sẵn sàng", "Thiết lập đồng bộ và thông tin sức khỏe kết nối sẽ có ở bản tiếp theo.", glyph = ReplayGlyph.Settings)
+                EmptyState("Chưa có thông tin đồng bộ", "Kết nối Spotify để xem sức khỏe đồng bộ.", glyph = ReplayGlyph.Settings)
                 if (!preview) {
                     Text("Đã kết nối Spotify. Playlist vẫn được giữ trong Spotify khi ngắt kết nối.")
                     OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Ngắt kết nối Spotify") }
@@ -120,13 +120,13 @@ private fun FoundationPage(preview: Boolean, tab: ReplayTab?, playlistName: Stri
                 SyncStatusChip("Chưa đồng bộ")
                 PlaylistHero(playlistName, confirmedCount = null, onOpen = if (preview) null else onOpenPlaylist)
                 ReplayHeading("Sắp đạt ngưỡng")
-                EmptyState("Chưa có lượt phát được ghi nhận", "Lịch sử và tiến độ sẽ xuất hiện khi tính năng đồng bộ sẵn sàng.")
+                EmptyState("Chưa có lượt phát được ghi nhận", "Kết nối Spotify để xem lịch sử và tiến độ từ dữ liệu của bạn.")
                 ReplayHeading("Mới vào bộ sưu tập")
                 EmptyState("Chưa xác minh bài trên Spotify", "Bài hát chỉ được hiển thị là đã thêm sau khi kiểm tra playlist thật.", glyph = ReplayGlyph.Collection)
             }
             ReplayTab.History -> {
                 ReplayHeading("Lịch sử nghe")
-                EmptyState("Chưa có lịch sử trên máy", "Bản này chưa nhập lịch sử từ Spotify. Không thể xác định số lượt phát.", glyph = ReplayGlyph.History)
+                EmptyState("Chưa có lịch sử trên máy", "Lịch sử của bạn xuất hiện sau khi kết nối và đồng bộ Spotify.", glyph = ReplayGlyph.History)
             }
             ReplayTab.Collection -> {
                 ReplayHeading("Bộ sưu tập")
@@ -141,7 +141,7 @@ private fun FoundationPage(preview: Boolean, tab: ReplayTab?, playlistName: Stri
                     Text("5 lượt trong 72 giờ", style = MaterialTheme.typography.titleLarge)
                     Text("Quy tắc mặc định · Ngày tính theo giờ Việt Nam. 72 giờ là khoảng trượt.")
                 }
-                Text("Chỉnh sửa quy tắc và tính số lượt phát sẽ có ở bản tiếp theo.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Kết nối Spotify để chỉnh sửa quy tắc và xem trước tác động từ lịch sử của bạn.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Text("Ứng dụng cá nhân độc lập, không phải ứng dụng chính thức của Spotify.",
