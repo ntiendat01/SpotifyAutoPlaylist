@@ -1,0 +1,19 @@
+package com.spotifyautoplaylist.auth
+
+enum class ProbeFailure {
+    INVALID_CLIENT_ID, PORT_IN_USE, CALLBACK_TIMEOUT, CANCELLED,
+    AUTHORIZATION_DENIED, AUTHORIZATION_FAILED, BROWSER_UNAVAILABLE,
+    NETWORK, TOKEN_HTTP, TOKEN_RESPONSE, INSUFFICIENT_SCOPE,
+    INVALID_OWNER_ID, PROFILE_HTTP, PROFILE_RESPONSE, ACCOUNT_MISMATCH, SESSION_EXPIRED,
+    API_HTTP, API_RESPONSE, INVALID_TRACK, INVALID_PLAYLIST, PLAYLIST_OWNER, PLAYLIST_PRIVACY,
+    PLAYLIST_NOT_READY, READ_INCOMPLETE, CREATION_UNCERTAIN, LINK_REQUIRED,
+    VERIFY_REMOTE, TRACK_LOCKED, CONFIRMATION_REQUIRED, JOURNAL, QUOTA_EXCEEDED,
+}
+
+// Safe to display/log: never attach a raw exception, URL, response body or credentials.
+class ProbeException(
+    val reason: ProbeFailure,
+    val httpStatus: Int? = null,
+    val retryAfterSeconds: Long? = null,
+) :
+    Exception(reason.name)
