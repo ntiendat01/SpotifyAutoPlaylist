@@ -125,3 +125,27 @@ forced to fit. Long choice rows remain directly selectable with horizontal scrol
   build/signing setup. The earlier configured-launcher test environment limitation remains outside UI scope.
 - Existing non-fatal LocalClipboardManager deprecation and native library strip notices remain.
   Lint XML has 24 informational Hints and no Warning/Error/Fatal; data lint has no issues.
+
+## Configured APK follow-up
+
+After the owner requested an update to the installed app, ADB briefly connected and the installed
+`io.github.ntiendat01.replay.debug` APK (0.5.0 / 500) was copied to a private temporary directory.
+Only its public BuildConfig Client ID/expected-owner constants and signer were inspected; no grant,
+token, listening history or app-private data was read. The public configuration was restored to the
+gitignored `spotify.local.properties` (mode 600), without displaying its values.
+
+Rebuild with `:app:lintDebug :app:assembleDebug`: **BUILD SUCCESSFUL, 1m32s**. APK constants were
+checked to match the installed APK. Configured artifact:
+`dist/replay-ui-update-0.5.0-debug.apk` (ignored; mode 600), SHA-256
+`5ae648fdb4bbde0c4a70fb1b040bd714d25a204a22f879ca52a1438e4be1866c`.
+The 416-test evidence above remains for the earlier unconfigured build; no new unit-test pass is
+claimed for the configured variant.
+
+**Installation blocked:** the installed signer matches neither the local debug key nor the owner's
+release key. The owner confirmed the old APK came from GitHub Actions. The current workflow does not
+cache/upload its debug keystore, and repository artifact inventory contains only APK/test reports,
+not signing keys. No code was pushed and no workflow was dispatched.
+The attempted `adb install -r` did not run on a device because the connection had disappeared
+(`adb: no devices/emulators found`). No package was removed, no data was cleared, and no successful
+installation is claimed. A signature-compatible update requires the original private key; removing
+and reinstalling requires explicit owner approval because local data/session would be lost.
