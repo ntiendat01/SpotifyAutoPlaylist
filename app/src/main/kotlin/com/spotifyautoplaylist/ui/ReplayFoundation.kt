@@ -35,7 +35,8 @@ fun ReplayFoundation(
     val navigation = rememberNavController()
     val entry by navigation.currentBackStackEntryAsState()
     val route = entry?.destination?.route ?: ReplayTab.Home.name
-    val settings = route == "settings"
+    val detail = route.startsWith("track/")
+    val settings = route == "settings" || detail
     val selected = ReplayTab.entries.firstOrNull { it.name == route } ?: ReplayTab.Home
     var confirmDisconnect by rememberSaveable { mutableStateOf(false) }
     fun select(tab: ReplayTab) {
@@ -64,11 +65,17 @@ fun ReplayFoundation(
             popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
             ReplayTab.entries.forEach { tab ->
                 composable(tab.name) {
+                    val openTrack: (String) -> Unit = { id -> navigation.navigate("track/$id") }
                     if (!preview && library != null && tab == ReplayTab.Home) HomeScreen(library, onRetryLibrary,
                         onOpenPlaylist = onOpenPlaylist, onOpenSettings = { navigation.navigate("settings") { launchSingleTop = true } },
-                        onOpenTrack = null)
+                        onOpenTrack = openTrack)
+                    else if (!preview && library != null && tab == ReplayTab.History) HistoryScreen(library, onRetryLibrary, openTrack)
                     else FoundationPage(preview, tab, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }
                 }
+            }
+            composable("track/{id}") { e ->
+                TrackDetailScreen(library ?: com.spotifyautoplaylist.library.LibraryUiState.NoAccount,
+                    e.arguments?.getString("id").orEmpty(), onRetryLibrary, onOpenUrl)
             }
             composable("settings") {
                 FoundationPage(preview, null, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }

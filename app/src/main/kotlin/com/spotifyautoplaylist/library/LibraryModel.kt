@@ -169,6 +169,28 @@ object LibraryModel {
         .sortedByDescending { it.addedAtMs ?: 0 }
         .take(limit)
 
+    enum class TimeFilter(val label: String) { TODAY("Hôm nay"), H72("72 giờ"), ALL("Tất cả") }
+    enum class StatusFilter(val label: String) { ALL("Tất cả"), NEAR("Gần đạt"), ADDED("Đã thêm") }
+
+    /** History list (06 §5): Room data only, one row per track, latest play first. Accent/case-insensitive search. */
+    fun history(s: LibrarySnapshot, query: String, time: TimeFilter, status: StatusFilter): List<TrackUiModel> {
+        val q = fold(query.trim())
+        return s.tracks.filter { t ->
+            when (time) { TimeFilter.TODAY -> t.todayCount > 0; TimeFilter.H72 -> t.rolling72hCount > 0; TimeFilter.ALL -> t.playTimesMs.isNotEmpty() }
+        }.filter { t ->
+            when (status) { StatusFilter.ALL -> true; StatusFilter.NEAR -> t.status == TrackStatus.NEAR; StatusFilter.ADDED -> t.status == TrackStatus.ADDED }
+        }.filter { q.isEmpty() || fold(it.name).contains(q) || fold(it.artists).contains(q) }
+    }
+
+    /** Plays counted by [history] rows for the chosen window (summary line). */
+    fun plays(rows: List<TrackUiModel>, time: TimeFilter) = rows.sumOf {
+        when (time) { TimeFilter.TODAY -> it.todayCount; TimeFilter.H72 -> it.rolling72hCount; TimeFilter.ALL -> it.playTimesMs.size }
+    }
+
+    private val MARKS = Regex("\\p{Mn}+")
+    internal fun fold(text: String): String = MARKS.replace(java.text.Normalizer.normalize(text.lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD), "")
+        .replace('đ', 'd')
+
     fun day(ms: Long): LocalDate = Instant.ofEpochMilli(ms).atZone(ZONE).toLocalDate()
 
     private val TIME = DateTimeFormatter.ofPattern("HH:mm").withZone(ZONE)

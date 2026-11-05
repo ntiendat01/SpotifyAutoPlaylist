@@ -42,3 +42,28 @@ Deviations / limitations
   playlist reads as "Đủ điều kiện" until re-added.
 - Snapshot time is taken at load; the Vietnam day rolls over on the next reload, not live.
 - Screenshots: `app/build/reports/ui/050C-home*.png` (Robolectric render, not a device).
+
+## TASK-050D — History, search/filter and Track Detail
+
+**Status: PASS (JVM), 2026-11-05.** 373 tests total (+8). Build 43 s.
+
+Files
+- `LibraryModel.kt` — `TimeFilter` (Hôm nay | 72 giờ | Tất cả), `StatusFilter` (Tất cả | Gần đạt | Đã thêm),
+  `history()` (Room snapshot only, one row per track, latest play first, case- and accent-insensitive search
+  on title/artist incl. `đ`), `plays()` summary.
+- `ui/HistoryScreen.kt` — `ChoiceChips`, `HistoryScreen`, `TrackDetailScreen`.
+- `ReplayFoundation.kt` — History tab on real data; `track/{id}` route (back arrow, no bottom bar) from Home and History.
+- `MainActivity.kt` — `onOpenUrl` opens validated `open.spotify.com/track/…` links (error dialog if nothing handles it).
+- Tests: `HistoryFilterTest` (4, JVM), `HistoryScreenTest` (4, Robolectric).
+
+State handling
+- Query and filters are `rememberSaveable` inside the tab destination; Navigation saves them across detail/back and tab switches.
+- "Đã thêm" filter shows PRESENT only. Coverage notice shown when not complete. Empty history, no match, unknown track id.
+- Detail: daily/rolling counters vs current thresholds, qualifying rule + time, remote added time (PRESENT only),
+  up to 50 newest play timestamps in Vietnam time ("và N lượt cũ hơn"), disclaimer
+  "Lượt phát Spotify ghi nhận không đồng nghĩa nghe hết bài".
+
+Deviations / limitations
+- Filter chips (FilterChip) instead of segmented buttons; neutral artwork placeholder.
+- No pagination: the whole account's history is loaded into memory per refresh (fine for a personal app; unmeasured on device).
+- Screenshots: `app/build/reports/ui/050D-history.png`, `050D-track-detail.png`.

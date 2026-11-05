@@ -79,6 +79,11 @@ class MainActivity : ComponentActivity() {
                             catch (_: ActivityNotFoundException) { externalError = "Không mở được Spotify hoặc trình duyệt. Hãy kiểm tra ứng dụng mặc định." }
                             catch (_: SecurityException) { externalError = "Không thể mở liên kết Spotify trên máy này." }
                         }) },
+                        onOpenUrl = if (preview) null else ({ url ->
+                            try { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
+                            catch (_: ActivityNotFoundException) { externalError = "Không mở được Spotify hoặc trình duyệt. Hãy kiểm tra ứng dụng mặc định." }
+                            catch (_: SecurityException) { externalError = "Không thể mở liên kết Spotify trên máy này." }
+                        }),
                         onExitPreview = { preview = false }, onDisconnect = model::disconnect,
                         version = BuildConfig.VERSION_NAME,
                     )
