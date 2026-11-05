@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.spotifyautoplaylist.library.LibraryViewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.spotifyautoplaylist.onboarding.*
@@ -63,7 +64,13 @@ class MainActivity : ComponentActivity() {
             }
             ReplayTheme {
                 if (preview || state.stage == OnboardingStage.READY) {
+                    // Created only after onboarding reaches READY; preview never reads account data.
+                    val library: LibraryViewModel? = if (!preview) viewModel(factory = viewModelFactory {
+                        initializer { LibraryViewModel(container.library) }
+                    }) else null
+                    val libraryState = library?.state?.collectAsStateWithLifecycle()?.value
                     ReplayFoundation(
+                        library = libraryState, onRetryLibrary = { library?.refresh() },
                         preview = preview,
                         playlistName = if (preview) null else state.playlist?.name,
                         onOpenPlaylist = if (preview) null else state.playlist?.let { playlist -> ({

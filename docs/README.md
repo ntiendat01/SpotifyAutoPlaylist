@@ -156,7 +156,10 @@ Spotify, a device or CI. OxygenOS background reliability is unverified (TASK-053
 **TASK-052: PASS — JVM tests and local build on 2026-11-05.** Failure handling and playlist relink
 ([M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md)). Not run against live Spotify, a device or CI. No relink UI yet.
 
-Next planned task: TASK-050C..I (M5 UI) / TASK-053, per docs/08.
+**TASK-050C: PASS — JVM tests and local build on 2026-11-05.** Home dashboard on real Room data ([M5-UI.md](M5-UI.md)).
+Not run against live Spotify, a device or CI.
+
+Next planned task: TASK-050D..I (M5 UI) / TASK-053, per docs/08.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

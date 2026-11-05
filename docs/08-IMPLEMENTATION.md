@@ -202,6 +202,7 @@ Android MediaSession-assisted observation, richer statistics, multiple playlists
 - TASK-050A Implement Replay design tokens, Compose components, insets and four-tab navigation; Settings is secondary route.
 - TASK-050B Implement onboarding/auth states and playlist setup confirmation.
 - TASK-050C Implement Home playlist hero, near-threshold list, newly collected and local 7-day chart with coverage warning.
+  - **PASS — 2026-11-05, JVM/Robolectric tests and local build only** ([M5-UI.md](M5-UI.md)). Not run on device, live Spotify or CI.
 - TASK-050D Implement History search/filter, Track Detail and timestamp disclaimer.
 - TASK-050E Implement Collection confirmed/pending/needs-review tabs with remote verification timestamps.
 - TASK-050F Implement Rules Studio draft/edit/save/discard and real-data preview.

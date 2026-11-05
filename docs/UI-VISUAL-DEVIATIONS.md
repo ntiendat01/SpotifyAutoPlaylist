@@ -29,3 +29,12 @@
 - External playlist is the real product. Never use the rendered visual reference file as a UI screenshot background.
 - Account isolation and Premium/Developer App gates remain governed by `AUTH-006` and actual Spotify API feasibility.
 - Do not invent functions from an illustration; update PRD, rules, tests and tasks *first* if adopting extras.
+
+## Implementation deviations log (TASK-050C..I)
+
+| Task | Reference | Deviation | Reason |
+|---|---|---|---|
+| 050C | `02-home.png` | Hero shows neutral placeholder, no album collage | No image loader; dependencies locked; artwork policy |
+| 050C | `02-home.png` | Linear threshold bars instead of rings | Reuses `ThresholdProgress`; text carries exact counts |
+| 050C | `02-home.png` | No Sync Now/last-sync card on Home; status strip links to Settings | Sync Now is in Settings (050G) |
+| 050C | `02-home.png` | Pulse counts are locally recorded play events, partial-coverage note when not complete | Honest coverage |

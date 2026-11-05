@@ -66,6 +66,11 @@ class AppContainer(context: Context) {
         }
     }
 
+    /** Read model for Home/History/Collection (TASK-050C); account-scoped, local only. */
+    val library: com.spotifyautoplaylist.library.LibrarySource by lazy {
+        com.spotifyautoplaylist.library.RoomLibrarySource(::currentAccount, database, settings, syncStatus)
+    }
+
     /** Null without Spotify configuration. */
     val syncOrchestrator: SyncOrchestrator? by lazy {
         val current = auth

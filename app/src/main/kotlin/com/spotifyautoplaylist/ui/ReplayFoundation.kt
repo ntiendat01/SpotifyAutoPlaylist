@@ -28,6 +28,9 @@ fun ReplayFoundation(
     onExitPreview: () -> Unit = {},
     onDisconnect: () -> Unit = {},
     version: String = "",
+    library: com.spotifyautoplaylist.library.LibraryUiState? = null,
+    onRetryLibrary: () -> Unit = {},
+    onOpenUrl: ((String) -> Unit)? = null,
 ) {
     val navigation = rememberNavController()
     val entry by navigation.currentBackStackEntryAsState()
@@ -61,7 +64,10 @@ fun ReplayFoundation(
             popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
             ReplayTab.entries.forEach { tab ->
                 composable(tab.name) {
-                    FoundationPage(preview, tab, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }
+                    if (!preview && library != null && tab == ReplayTab.Home) HomeScreen(library, onRetryLibrary,
+                        onOpenPlaylist = onOpenPlaylist, onOpenSettings = { navigation.navigate("settings") { launchSingleTop = true } },
+                        onOpenTrack = null)
+                    else FoundationPage(preview, tab, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }
                 }
             }
             composable("settings") {

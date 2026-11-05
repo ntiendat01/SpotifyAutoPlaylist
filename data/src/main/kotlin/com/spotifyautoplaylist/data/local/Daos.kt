@@ -59,6 +59,10 @@ abstract class HistoryDao {
 
     @Query("SELECT * FROM tracks WHERE spotify_user_id = :userId AND track_id = :trackId")
     abstract suspend fun track(userId: String, trackId: String): TrackEntity?
+
+    /** UI read model (TASK-050C): every cached track of the account. */
+    @Query("SELECT * FROM tracks WHERE spotify_user_id = :userId")
+    abstract suspend fun tracks(userId: String): List<TrackEntity>
 }
 
 @Dao
@@ -285,6 +289,10 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM playlist_outbox WHERE spotify_user_id = :userId AND state IN (:states) ORDER BY track_id")
     suspend fun outboxIn(userId: String, states: List<OutboxState>): List<PlaylistOutboxEntity>
+
+    /** UI read model (TASK-050C): every outbox row of the account, any playlist and state. */
+    @Query("SELECT * FROM playlist_outbox WHERE spotify_user_id = :userId")
+    suspend fun outboxAll(userId: String): List<PlaylistOutboxEntity>
 
     /** TX-04 step: persist e.g. VERIFY_REMOTE before the network POST; network I/O never runs inside a transaction. */
     @Update suspend fun updateOutbox(item: PlaylistOutboxEntity): Int

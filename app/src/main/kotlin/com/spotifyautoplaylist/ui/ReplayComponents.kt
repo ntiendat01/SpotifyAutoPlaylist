@@ -168,9 +168,18 @@ fun ThresholdProgress(count: Int, threshold: Int, label: String) {
 
 /** Text/state supplied by a caller; never infers Added from a local count. */
 @Composable
-fun TrackRow(name: String, artists: String, status: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+fun TrackRow(name: String, artists: String, status: String, onClick: (() -> Unit)?, modifier: Modifier = Modifier,
+             extra: @Composable ColumnScope.() -> Unit = {}) {
+    val colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    if (onClick != null) Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, colors = colors) {
+        TrackRowBody(name, artists, status, extra)
+    } else Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, colors = colors) {
+        TrackRowBody(name, artists, status, extra)
+    }
+}
+
+@Composable
+private fun TrackRowBody(name: String, artists: String, status: String, extra: @Composable ColumnScope.() -> Unit) {
         Row(Modifier.padding(16.dp).heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             TrackArtwork(Modifier.size(48.dp))
@@ -178,9 +187,9 @@ fun TrackRow(name: String, artists: String, status: String, onClick: () -> Unit,
                 Text(name, style = MaterialTheme.typography.titleMedium)
                 Text(artists, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(status, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                extra()
             }
         }
-    }
 }
 
 @Composable
@@ -191,7 +200,8 @@ fun TrackArtwork(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun PlaylistHero(name: String?, confirmedCount: Int?, onOpen: (() -> Unit)? = null) {
+fun PlaylistHero(name: String?, confirmedCount: Int?, onOpen: (() -> Unit)? = null,
+                 footer: @Composable ColumnScope.() -> Unit = {}) {
     ReplayCard(hero = true) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             TrackArtwork(Modifier.size(64.dp))
@@ -200,6 +210,7 @@ fun PlaylistHero(name: String?, confirmedCount: Int?, onOpen: (() -> Unit)? = nu
         Text(confirmedCount?.let { "$it bài đã xác minh trên Spotify" } ?: "Chưa xác minh số bài trên Spotify",
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (onOpen != null) PrimaryActionButton("Mở trong Spotify", onOpen)
+        footer()
     }
 }
 
