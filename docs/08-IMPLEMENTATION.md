@@ -110,6 +110,10 @@ Version 1.3.0 · Status: Baseline
     Spotify writes, no schema change. 16 new tests, 262 total; not wired to workers/UI; no live
     Spotify/device/CI run. See [M4-PLAYLIST-RECONCILE.md](M4-PLAYLIST-RECONCILE.md).
 - TASK-042 Implement outbox state machine, ambiguous POST verification and external removal handling.
+  - **PASS — 2026-11-05, JVM tests and local build.** Durable SENDING claim before POST, verify-on-ambiguous,
+    crash-resume, REMOVED_EXTERNALLY never re-added, 429/403/404 handling, batches ≤100, account-scoped. No schema
+    change. 22 new tests, 284 total; not wired to workers/UI; no live Spotify/device/CI run. See
+    [M4-OUTBOX-WRITER.md](M4-OUTBOX-WRITER.md).
 - TASK-043 Tests TC-012..017, TC-028.
   **Exit:** qualifying track appears exactly once in tested normal and recovery paths.
 

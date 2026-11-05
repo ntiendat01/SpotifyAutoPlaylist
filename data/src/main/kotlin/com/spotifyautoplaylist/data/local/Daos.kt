@@ -122,12 +122,98 @@ abstract class QualificationDao {
      * `added_at` (or null). Never deletes rows and never causes a write to Spotify. See [reconcileRow].
      */
     @Transaction
-    open suspend fun reconcileOutbox(userId: String, playlistId: String, remoteAddedAtMs: Map<String, Long?>, nowMs: Long): List<PlaylistOutboxEntity> =
+    open suspend fun reconcileOutbox(
+        userId: String,
+        playlistId: String,
+        remoteAddedAtMs: Map<String, Long?>,
+        nowMs: Long,
+        resolveInFlight: Boolean = false,
+        maxAttempts: Int = OutboxTransitions.MAX_SEND_ATTEMPTS,
+    ): List<PlaylistOutboxEntity> =
         outboxInQualificationOrder(userId, playlistId).map { row ->
-            val next = reconcileRow(row, row.trackId in remoteAddedAtMs, remoteAddedAtMs[row.trackId], nowMs)
+            val present = row.trackId in remoteAddedAtMs
+            var next = reconcileRow(row, present, remoteAddedAtMs[row.trackId], nowMs)
+            // TASK-042: only with a complete read in hand may an in-flight row be declared absent.
+            if (resolveInFlight && !present) next = OutboxTransitions.confirmedAbsent(next, maxAttempts)
             if (next != row) check(updateOutboxRow(next) == 1)
             next
         }
+
+    @Query("SELECT * FROM playlist_outbox WHERE spotify_user_id = :userId AND playlist_id = :playlistId AND track_id = :trackId")
+    protected abstract suspend fun outboxRow(userId: String, playlistId: String, trackId: String): PlaylistOutboxEntity?
+
+    @Query("SELECT * FROM playlist_outbox WHERE spotify_user_id = :userId AND playlist_id = :playlistId AND state = 'SENDING'")
+    protected abstract suspend fun sendingRows(userId: String, playlistId: String): List<PlaylistOutboxEntity>
+
+    /** TASK-042 crash-resume: a SENDING row found before any POST of this run may have reached Spotify. */
+    @Transaction
+    open suspend fun resumeInterrupted(userId: String, playlistId: String): List<String> =
+        sendingRows(userId, playlistId).map { row ->
+            check(updateOutboxRow(OutboxTransitions.interrupted(row)) == 1)
+            row.trackId
+        }
+
+    /**
+     * TASK-042 durable pre-POST journal (TX-04): PENDING -> SENDING with attempt_count+1 in one transaction,
+     * committed before the network call. Rows at the attempt cap become BLOCKED; other states are skipped.
+     * Returns the claimed track IDs in the given order.
+     */
+    @Transaction
+    open suspend fun claimForSend(userId: String, playlistId: String, trackIds: List<String>, nowMs: Long,
+                                  maxAttempts: Int = OutboxTransitions.MAX_SEND_ATTEMPTS): List<String> =
+        trackIds.mapNotNull { id ->
+            val row = outboxRow(userId, playlistId, id) ?: return@mapNotNull null
+            val next = OutboxTransitions.claim(row, nowMs, maxAttempts) ?: return@mapNotNull null
+            check(updateOutboxRow(next) == 1)
+            id.takeIf { next.state == OutboxState.SENDING }
+        }
+
+    /** TASK-042 settle one POST batch. Only rows still SENDING are changed. */
+    @Transaction
+    open suspend fun settleSent(userId: String, playlistId: String, trackIds: List<String>, result: SendResult,
+                                errorCode: String?, nowMs: Long): Int =
+        trackIds.count { id ->
+            val row = outboxRow(userId, playlistId, id) ?: return@count false
+            val next = OutboxTransitions.settle(row, result, errorCode, nowMs)
+            if (next == row) false else { check(updateOutboxRow(next) == 1); true }
+        }
+}
+
+enum class SendResult { ADDED, AMBIGUOUS, REJECTED }
+
+/** TASK-042 pure outbox transitions (03 §5, 05 TX-04, BR-008). */
+object OutboxTransitions {
+    /** Internal cap on POST attempts per row (not a business threshold; see docs/M4-OUTBOX-WRITER.md). */
+    const val MAX_SEND_ATTEMPTS = 5
+    const val ATTEMPTS_EXHAUSTED = "ATTEMPTS_EXHAUSTED"
+    const val VERIFY_ABSENT = "VERIFY_ABSENT"
+    const val INTERRUPTED = "INTERRUPTED"
+
+    fun claim(row: PlaylistOutboxEntity, nowMs: Long, maxAttempts: Int): PlaylistOutboxEntity? = when {
+        row.state != OutboxState.PENDING -> null
+        row.attemptCount >= maxAttempts -> row.copy(state = OutboxState.BLOCKED, lastErrorCode = ATTEMPTS_EXHAUSTED)
+        else -> row.copy(state = OutboxState.SENDING, attemptCount = row.attemptCount + 1, lastAttemptMs = nowMs, lastErrorCode = null)
+    }
+
+    fun settle(row: PlaylistOutboxEntity, result: SendResult, errorCode: String?, nowMs: Long): PlaylistOutboxEntity {
+        if (row.state != OutboxState.SENDING) return row
+        return when (result) {
+            SendResult.ADDED -> row.copy(state = OutboxState.PRESENT, addedAtMs = nowMs, lastErrorCode = null)
+            SendResult.AMBIGUOUS -> row.copy(state = OutboxState.VERIFY_REMOTE, lastErrorCode = errorCode)
+            SendResult.REJECTED -> row.copy(state = OutboxState.RETRY_LATER, lastErrorCode = errorCode)
+        }
+    }
+
+    fun interrupted(row: PlaylistOutboxEntity): PlaylistOutboxEntity =
+        if (row.state == OutboxState.SENDING) row.copy(state = OutboxState.VERIFY_REMOTE, lastErrorCode = INTERRUPTED) else row
+
+    /** In-flight row confirmed absent by a complete remote read: retry later, or BLOCKED once attempts are used up. */
+    fun confirmedAbsent(row: PlaylistOutboxEntity, maxAttempts: Int): PlaylistOutboxEntity = when (row.state) {
+        OutboxState.SENDING, OutboxState.VERIFY_REMOTE ->
+            if (row.attemptCount >= maxAttempts) row.copy(state = OutboxState.BLOCKED, lastErrorCode = ATTEMPTS_EXHAUSTED)
+            else row.copy(state = OutboxState.RETRY_LATER, lastErrorCode = VERIFY_ABSENT)
+        else -> row
+    }
 }
 
 /**

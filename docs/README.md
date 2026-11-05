@@ -140,7 +140,11 @@ run against live Spotify, a device or CI. See [M4-PLAYLIST-SETUP.md](M4-PLAYLIST
 reconcile-before-write (no Spotify writes, no schema change). 262 JVM tests passed; not run against live
 Spotify, a device or CI. See [M4-PLAYLIST-RECONCILE.md](M4-PLAYLIST-RECONCILE.md).
 
-Next planned task: TASK-042 (outbox state machine, ambiguous POST verification, external removal handling).
+**TASK-042: PASS — JVM tests and local build on 2026-11-05.** Outbox state machine, ambiguous POST
+verification and external removal handling; no schema change. 284 JVM tests passed; not run against live
+Spotify, a device or CI. See [M4-OUTBOX-WRITER.md](M4-OUTBOX-WRITER.md).
+
+Next planned task: TASK-043 (tests TC-012..017, TC-028).
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth

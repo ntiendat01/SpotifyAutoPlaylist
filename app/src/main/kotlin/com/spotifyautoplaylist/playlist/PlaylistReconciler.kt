@@ -18,6 +18,7 @@ sealed interface ReconcileResult {
         val snapshotId: String,
         val present: List<String>,
         val missing: List<String>,
+        val retryLater: List<String>,
         val removedExternally: List<String>,
         val unresolved: List<String>,
     ) : ReconcileResult
@@ -36,7 +37,11 @@ class PlaylistReconciler(
     private val clock: () -> Long = System::currentTimeMillis,
     private val pageCap: Int = PlaylistMembershipReader.DEFAULT_PAGE_CAP,
 ) {
-    suspend fun reconcile(): ReconcileResult {
+    /**
+     * @param resolveInFlight TASK-042 writer only: SENDING/VERIFY_REMOTE rows absent from this complete read become
+     *   RETRY_LATER (or BLOCKED at the attempt cap) instead of staying unresolved.
+     */
+    suspend fun reconcile(resolveInFlight: Boolean = false): ReconcileResult {
         val key = account()
         val target = verifier.verify()
         if (target !is WriteTarget.Ready) return ReconcileResult.NotWritable(target)
@@ -44,12 +49,14 @@ class PlaylistReconciler(
         if (membership !is RemoteMembership.Complete) return ReconcileResult.Incomplete(membership as RemoteMembership.Incomplete)
         // Account switch during the read (AUTH-006): never apply one account's remote state to another.
         if (account() != key) return ReconcileResult.NotWritable(WriteTarget.RelinkRequired(RelinkReason.OWNER))
-        val rows = database.qualifications().reconcileOutbox(key.spotifyUserId, target.playlistId, membership.addedAtMs, clock())
+        val rows = database.qualifications().reconcileOutbox(
+            key.spotifyUserId, target.playlistId, membership.addedAtMs, clock(), resolveInFlight)
         fun ids(vararg s: OutboxState) = rows.filter { it.state in s }.map { it.trackId }
         return ReconcileResult.Reconciled(
             target.playlistId, target.snapshotId,
             present = ids(OutboxState.PRESENT),
             missing = ids(OutboxState.PENDING),
+            retryLater = ids(OutboxState.RETRY_LATER),
             removedExternally = ids(OutboxState.REMOVED_EXTERNALLY),
             unresolved = ids(OutboxState.SENDING, OutboxState.VERIFY_REMOTE, OutboxState.BLOCKED),
         )
