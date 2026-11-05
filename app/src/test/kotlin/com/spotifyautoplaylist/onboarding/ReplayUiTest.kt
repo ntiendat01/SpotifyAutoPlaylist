@@ -34,6 +34,9 @@ class ReplayUiTest {
         compose.onNodeWithText("Kết nối Spotify").assertIsEnabled().assertIsDisplayed()
         compose.onNodeWithText("Quyền truy cập & cách hoạt động").performScrollTo().performClick()
         compose.onNodeWithText("Quyền truy cập Spotify").assertIsDisplayed()
+        // Release checklist privacy notice: local history storage + Spotify authorization (TASK-054).
+        compose.onNodeWithText("Lịch sử nghe chỉ lưu trên điện thoại này", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("xin quyền đọc lượt phát gần đây", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Đã hiểu").performClick()
     }
 

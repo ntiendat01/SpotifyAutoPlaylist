@@ -142,7 +142,7 @@ internal fun OnboardingContent(
     }
     if (showPermissions) AlertDialog(
         onDismissRequest = { showPermissions = false }, title = { Text("Quyền truy cập Spotify") },
-        text = { Text("replay. xin quyền đọc lượt phát gần đây, đọc playlist riêng tư và tạo/cập nhật playlist riêng tư. Spotify có thể chỉ cung cấp một phần lịch sử. Một lượt phát không có nghĩa là nghe hết bài. Playlist vẫn còn trên Spotify khi gỡ app.") },
+        text = { Text("replay. xin quyền đọc lượt phát gần đây, đọc playlist riêng tư và tạo/cập nhật playlist riêng tư. Spotify có thể chỉ cung cấp một phần lịch sử. Một lượt phát không có nghĩa là nghe hết bài. Playlist vẫn còn trên Spotify khi gỡ app. Lịch sử nghe chỉ lưu trên điện thoại này, không sao lưu lên đám mây và không gửi đến máy chủ nào ngoài Spotify; gỡ app sẽ xóa lịch sử này.") },
         confirmButton = { TextButton(onClick = { showPermissions = false }) { Text("Đã hiểu") } },
     )
     confirm?.let { action ->

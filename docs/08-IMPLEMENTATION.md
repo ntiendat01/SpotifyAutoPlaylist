@@ -142,6 +142,7 @@ history ingestion, counting or workers. Scope, tests, visual deviations and evid
     transaction. No schema change, no UI; not run on live Spotify/device/CI. See [M5-ERROR-HANDLING.md](M5-ERROR-HANDLING.md).
 - TASK-053 Device E2E TC-018..025, TC-029..030; verify background delays on OxygenOS. **PREPARED, NOT EXECUTED**: runbook and results template in [M5-DEVICE-E2E.md](M5-DEVICE-E2E.md); no device/live Spotify run yet.
 - TASK-054 Produce signed release APK and manual install/update test.
+  **PREPARED, NOT EXECUTED** (not Released): signing via env/out-of-repo properties, `scripts/release.sh`, optional manual `release.yml`, privacy notice expanded, R8 off; runbook [M6-RELEASE.md](M6-RELEASE.md). No signed APK, device test or tag yet.
   **Exit:** all release blockers cleared, docs status updated to Released.
 
 ## Build without Android Studio

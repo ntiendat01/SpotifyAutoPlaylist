@@ -40,3 +40,11 @@ google-services.json
 !.env.example
 spotify.local.properties
 evidence/private/
+
+# Release signing material (TASK-054): never commit
+keystore.properties
+signing.properties
+*.p12
+*.pk8
+.replay-signing/
+dist/

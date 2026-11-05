@@ -179,7 +179,9 @@ Not run against live Spotify, a device or CI.
 
 TASK-053 device E2E: PREPARED, NOT EXECUTED — runbook [M5-DEVICE-E2E.md](M5-DEVICE-E2E.md). Results pending the user's OnePlus run.
 
-Next planned task: execute TASK-053 on device (user), per docs/08.
+TASK-054 release: PREPARED, NOT EXECUTED — [M6-RELEASE.md](M6-RELEASE.md); no signed release APK produced, not Released.
+
+Next planned task: owner runs TASK-053/054 on device, per docs/08.
 
 **Early M5 UI checkpoint — TASK-050A/050B (2026-11-05):** user requested UI foundation and onboarding
 before M3/M4 for device inspection. Native Replay components/four-tab preview, production M2 auth
