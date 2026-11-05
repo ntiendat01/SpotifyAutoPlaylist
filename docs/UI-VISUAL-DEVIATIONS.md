@@ -43,3 +43,4 @@
 | 050F | Rules Studio | Placeholder artwork-free cards; preview lists up to 3 tracks + count; no auto-add/notification toggles (unsupported) |
 | 050G | Settings / Sync Health | Text-only health card and monospace diagnostics; relink card shown only on RELINK_REQUIRED; no toggles |
 | 050H | All data tabs | Rules stepper shows number over unit for large fonts; no other visual change |
+| 050I | Hero card glow and progress fill animation (not in concept) | Small polish allowed by 050I; bounded to the card; disabled under reduced motion |

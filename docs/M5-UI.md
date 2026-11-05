@@ -121,3 +121,11 @@ JVM acceptance sweep. See [`M5-UI-ACCEPTANCE.md`](M5-UI-ACCEPTANCE.md) for the U
   - The manual sync result now says "Đồng bộ thành công — không có bài mới" when nothing qualified, as UI-VISUAL-REFERENCE requires, and never claims tracks were added.
 - Tests: LeakSweepTest (1), UiAcceptanceTest (3). Screenshots: 050H-*-320dp-font13, 050H-*-empty, 050H-settings-offline.
 - Not done: TalkBack, device rendering and live flows. These are listed as REQUIRES DEVICE.
+
+**Scope:** optional polish, kept small. No business-rule, data or Room change.
+
+- **Bounded gradient:** the hero card gets a faint emerald radial glow (primary at 14% alpha), drawn only inside the card's rounded shape. No full-screen gradients.
+- **Reduced-motion-aware animation:** `ThresholdProgress` fills from 0 to its value over 600 ms. When the system animator duration scale is 0 (Remove animations or power saver), it snaps straight to the final value. `LocalReducedMotion` lets tests override this.
+- **Accessibility:** the indicator's semantics always report the exact final value (`ProgressBarRangeInfo`), never the in-flight animated value. The visible "N/M" text is unchanged.
+- **Tests:** MotionPolishTest (3). Screenshots: 050I-hero-glow, 050I-reduced-motion.
+- **Limitations:** checked only in Robolectric. Not tried on a device with power saver enabled.

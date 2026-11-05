@@ -17,7 +17,7 @@ a device or CI, and background reliability on OxygenOS is unverified. See [docs/
 Failure handling (TASK-052): offline, 401/403/429, account mismatch and a confirmed playlist relink are handled
 and tested on the JVM only (no UI, not run live/device/CI). See [docs/M5-ERROR-HANDLING.md](docs/M5-ERROR-HANDLING.md).
 
-M5 UI screens (TASK-050C+): progress and limitations in [docs/M5-UI.md](docs/M5-UI.md). JVM/Robolectric only. UI-TC-001..018 JVM-vs-device status: [docs/M5-UI-ACCEPTANCE.md](docs/M5-UI-ACCEPTANCE.md).
+M5 UI screens (TASK-050C–050I complete locally): progress and limitations in [docs/M5-UI.md](docs/M5-UI.md). JVM/Robolectric only. UI-TC-001..018 JVM-vs-device status: [docs/M5-UI-ACCEPTANCE.md](docs/M5-UI-ACCEPTANCE.md).
 
 Qualification rule (owner, 2026-11-05): **>= 3 plays in one Vietnam day OR >= 5 plays in any rolling 72 h**.
 The pure history-sync engine (TASK-030) and qualification evaluator (TASK-031) exist as tested JVM logic only.

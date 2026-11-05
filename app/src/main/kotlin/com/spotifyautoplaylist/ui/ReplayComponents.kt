@@ -18,6 +18,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,7 +89,8 @@ fun ReplayCard(modifier: Modifier = Modifier, hero: Boolean = false, content: @C
         Column(Modifier.background(Brush.linearGradient(listOf(
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (hero) .7f else .25f),
             MaterialTheme.colorScheme.background.copy(alpha = .55f),
-        ))).padding(ReplayTokens.CardPadding), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+        ))).then(if (hero) Modifier.background(heroGlow()) else Modifier)
+            .padding(ReplayTokens.CardPadding), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
     }
 }
 
@@ -156,13 +159,39 @@ fun ErrorState(message: String, retry: (() -> Unit)? = null) {
     }
 }
 
+/** TASK-050I: bounded emerald glow, drawn only inside the hero card (no full-screen gradients). */
+@Composable
+private fun heroGlow(): Brush = Brush.radialGradient(
+    listOf(MaterialTheme.colorScheme.primary.copy(alpha = .14f), androidx.compose.ui.graphics.Color.Transparent),
+    center = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, 0f), radius = 900f,
+)
+
+/** True when the system disables animations (animator duration scale 0, e.g. power saver / Remove animations). */
+val LocalReducedMotion = androidx.compose.runtime.compositionLocalOf<Boolean?> { null }
+
+@Composable
+fun reducedMotion(): Boolean = LocalReducedMotion.current ?: run {
+    val resolver = androidx.compose.ui.platform.LocalContext.current.contentResolver
+    androidx.compose.runtime.remember(resolver) {
+        android.provider.Settings.Global.getFloat(resolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+}
+
 @Composable
 fun ThresholdProgress(count: Int, threshold: Int, label: String) {
     require(count >= 0 && threshold > 0)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("$count/$threshold $label", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-        LinearProgressIndicator(progress = { (count.toFloat() / threshold).coerceIn(0f, 1f) },
-            modifier = Modifier.fillMaxWidth(), trackColor = MaterialTheme.colorScheme.surfaceVariant)
+        val target = (count.toFloat() / threshold).coerceIn(0f, 1f)
+        // Decorative fill-in only; the exact value is always in the text above and in the semantics.
+        val reduced = reducedMotion()
+        val anim = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(if (reduced) target else 0f) }
+        androidx.compose.runtime.LaunchedEffect(target, reduced) {
+            if (reduced) anim.snapTo(target) else anim.animateTo(target, androidx.compose.animation.core.tween(600))
+        }
+        Box(Modifier.fillMaxWidth().clearAndSetSemantics { progressBarRangeInfo = androidx.compose.ui.semantics.ProgressBarRangeInfo(target, 0f..1f) }) {
+            LinearProgressIndicator(progress = { anim.value }, modifier = Modifier.fillMaxWidth(), trackColor = MaterialTheme.colorScheme.surfaceVariant)
+        }
     }
 }
 

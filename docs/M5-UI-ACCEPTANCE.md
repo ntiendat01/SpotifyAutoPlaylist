@@ -22,7 +22,7 @@
 | UI-TC-013 | Offline / 401 / 429 / quota | Covered on JVM | SyncCopy distinct copy; UiAcceptanceTest offline; SettingsScreenTest | REQUIRES DEVICE: airplane mode, revoked token |
 | UI-TC-014 | Disconnect / switch account | Covered on JVM (050B) | Foundation disconnect dialog + reset tests | REQUIRES DEVICE |
 | UI-TC-015 | TalkBack / font 1.3 / narrow | Partially covered | UiAcceptanceTest: 320dp at font 1.3, labelled actions ≥48dp on all 5 screens | REQUIRES DEVICE: TalkBack pass |
-| UI-TC-016 | Reduced motion | Pending 050I | No decorative motion exists yet (static UI) | REQUIRES DEVICE: power saver |
+| UI-TC-016 | Reduced motion | Pass (Robolectric) | MotionPolishTest: animator scale 0 ⇒ reducedMotion(); progress fill snaps to final value; exact value always in text + semantics | REQUIRES DEVICE: power saver |
 | UI-TC-017 | Manual Spotify deletion | Covered on JVM (model) | REMOVED_EXTERNALLY status; reconcile tests (M4) | REQUIRES DEVICE: delete a track in Spotify, then sync |
 | UI-TC-018 | Diagnostics copied | Covered on JVM | DiagnosticsTest (no IDs, names, URLs or tokens; unknown codes become OTHER) | Paste check on device |
 

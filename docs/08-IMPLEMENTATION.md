@@ -214,6 +214,7 @@ Android MediaSession-assisted observation, richer statistics, multiple playlists
 - TASK-050H Run `UI-TC-001..018` on OnePlus; verify accessibility, offline/error states and no fake production data.
   - **PASS — 2026-11-05, JVM/Robolectric tests and local build only** ([M5-UI.md](M5-UI.md)). Not run on device, live Spotify or CI.
 - TASK-050I Optional polish: bounded artwork gradients and reduced-motion-aware animations.
+  - **PASS — 2026-11-05, JVM/Robolectric tests and local build only** ([M5-UI.md](M5-UI.md)). Not run on device, live Spotify or CI.
 
 ## v1.3 — Visual implementation handoff (exact eight PNGs)
 
