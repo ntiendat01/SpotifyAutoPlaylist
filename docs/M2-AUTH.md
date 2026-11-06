@@ -142,3 +142,9 @@ unreadable binding, binding file), `:app:testDebugUnitTest` 23, lint 15 hints, n
 - No CI run observed for these changes yet.
 - Process death during browser login loses the in-memory PKCE verifier; the user restarts login.
 - No UI or visual changes.
+
+
+## TASK-061 — Runtime Client ID / Owner User ID
+
+See [M7-RUNTIME-SPOTIFY-IDS.md](M7-RUNTIME-SPOTIFY-IDS.md). `AuthConfig` may come from DataStore
+(runtime) with an optional BuildConfig seed; changing IDs requires confirmation and `resetAccount`.

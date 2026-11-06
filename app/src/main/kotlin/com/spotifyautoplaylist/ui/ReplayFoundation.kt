@@ -33,6 +33,7 @@ fun ReplayFoundation(
     onOpenUrl: ((String) -> Unit)? = null,
     onSaveRules: SaveRules? = null,
     settingsActions: SettingsActions? = null,
+    authIdActions: AuthIdSettingsActions? = null,
 ) {
     val navigation = rememberNavController()
     val entry by navigation.currentBackStackEntryAsState()
@@ -84,7 +85,7 @@ fun ReplayFoundation(
                     e.arguments?.getString("id").orEmpty(), onRetryLibrary, onOpenUrl)
             }
             composable("settings") {
-                if (!preview && library != null) SettingsScreen(library, onRetryLibrary, settingsActions, version, onOpenPlaylist) { confirmDisconnect = true }
+                if (!preview && library != null) SettingsScreen(library, onRetryLibrary, settingsActions, version, onOpenPlaylist, authIdActions) { confirmDisconnect = true }
                 else FoundationPage(preview, null, playlistName, onOpenPlaylist, version) { confirmDisconnect = true }
             }
         }

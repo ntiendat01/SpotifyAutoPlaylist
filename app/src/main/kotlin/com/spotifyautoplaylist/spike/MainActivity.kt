@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spotifyautoplaylist.library.LibraryViewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.spotifyautoplaylist.data.auth.SpotifyAuthConfigRepository
 import com.spotifyautoplaylist.onboarding.*
 import com.spotifyautoplaylist.ui.*
 import com.spotifyautoplaylist.widget.ReplayWidgetUpdater
@@ -34,7 +35,24 @@ class MainActivity : ComponentActivity() {
         val container = (application as ReplayApplication).container
         setContent {
             val model: OnboardingViewModel = viewModel(factory = viewModelFactory {
-                initializer { OnboardingViewModel(container.onboardingAuth, container.playlistSetup, container.sync?.let { s -> SyncScheduleHook { s.ensureScheduled() } }, onLocalDataChanged = { ReplayWidgetUpdater.request(this@MainActivity) }) }
+                initializer {
+                    val ids = object : RuntimeAuthIds {
+                        override fun isConfigured() = container.auth.isConfigured
+                        override fun maskedIds() = container.auth.configOrNull()?.let {
+                            SpotifyAuthConfigRepository.maskId(it.clientId) to SpotifyAuthConfigRepository.maskId(it.expectedOwnerId)
+                        }
+                        override suspend fun save(clientId: String, ownerUserId: String, confirmed: Boolean) {
+                            container.configureAuthIds(clientId, ownerUserId, confirmed)
+                        }
+                    }
+                    OnboardingViewModel(
+                        container.onboardingAuth,
+                        container.playlistSetup,
+                        SyncScheduleHook { container.sync.ensureScheduled() },
+                        onLocalDataChanged = { ReplayWidgetUpdater.request(this@MainActivity) },
+                        authIds = ids,
+                    )
+                }
             })
             val state by model.state.collectAsStateWithLifecycle()
             var preview by rememberSaveable { mutableStateOf(false) }
@@ -72,11 +90,20 @@ class MainActivity : ComponentActivity() {
                     val libraryState = library?.state?.collectAsStateWithLifecycle()?.value
                     ReplayFoundation(
                         library = libraryState, onRetryLibrary = { library?.refresh() },
-                        settingsActions = if (preview) null else container.sync?.let { repo -> object : com.spotifyautoplaylist.ui.SettingsActions {
-                            override suspend fun syncNow() = repo.requestManualSync()
+                        settingsActions = if (preview) null else object : com.spotifyautoplaylist.ui.SettingsActions {
+                            override suspend fun syncNow() = container.sync.requestManualSync()
                             override suspend fun relink(input: String, confirmed: Boolean) =
-                                repo.relinkPlaylist(input, confirmed).also { ReplayWidgetUpdater.request(this@MainActivity) }
-                        } },
+                                container.sync.relinkPlaylist(input, confirmed).also { ReplayWidgetUpdater.request(this@MainActivity) }
+                        },
+                        authIdActions = if (preview || !container.auth.isConfigured) null else object : com.spotifyautoplaylist.ui.AuthIdSettingsActions {
+                            override val maskedClientId = SpotifyAuthConfigRepository.maskId(container.auth.configOrNull()!!.clientId)
+                            override val maskedOwnerId = SpotifyAuthConfigRepository.maskId(container.auth.configOrNull()!!.expectedOwnerId)
+                            override suspend fun save(clientId: String, ownerUserId: String, confirmed: Boolean) {
+                                container.configureAuthIds(clientId, ownerUserId, confirmed)
+                                ReplayWidgetUpdater.request(this@MainActivity)
+                                model.restore()
+                            }
+                        },
                         onSaveRules = if (preview) null else ({ d, r -> container.saveRules(d, r).also { library?.refresh() } }),
                         preview = preview,
                         playlistName = if (preview) null else state.playlist?.name,

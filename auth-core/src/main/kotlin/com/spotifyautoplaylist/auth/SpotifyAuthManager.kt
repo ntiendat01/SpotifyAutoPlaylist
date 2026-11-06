@@ -26,7 +26,7 @@ sealed interface AuthState {
  * mutex, so concurrent callers share one refresh and a rotated refresh token is never lost.
  */
 class SpotifyAuthManager(
-    private val config: AuthConfig,
+    private val configProvider: () -> AuthConfig,
     private val store: CredentialStore,
     private val bindings: AccountBindingStore,
     private val tokens: TokenEndpoint,
@@ -36,6 +36,19 @@ class SpotifyAuthManager(
     private val now: () -> Long = System::currentTimeMillis,
     private val io: CoroutineDispatcher = Dispatchers.IO,
 ) : BearerTokenProvider {
+    /** Fixed-config convenience used by existing tests and call sites. */
+    constructor(
+        config: AuthConfig,
+        store: CredentialStore,
+        bindings: AccountBindingStore,
+        tokens: TokenEndpoint,
+        identity: IdentityVerifier,
+        resetSteps: List<AccountResetStep> = emptyList(),
+        now: () -> Long = System::currentTimeMillis,
+        io: CoroutineDispatcher = Dispatchers.IO,
+    ) : this({ config }, store, bindings, tokens, identity, resetSteps, now, io)
+
+    private val config: AuthConfig get() = configProvider()
     private val mutex = Mutex()
     private var loaded = false
     private var current: StoredCredentials? = null

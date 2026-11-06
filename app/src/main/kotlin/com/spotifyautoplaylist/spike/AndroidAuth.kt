@@ -6,6 +6,8 @@ import android.security.keystore.KeyProperties
 import com.spotifyautoplaylist.auth.AccountResetStep
 import com.spotifyautoplaylist.auth.AesGcmTokenCipher
 import com.spotifyautoplaylist.auth.AuthConfig
+import com.spotifyautoplaylist.auth.AuthException
+import com.spotifyautoplaylist.auth.AuthFailure
 import com.spotifyautoplaylist.auth.AuthorizationFlow
 import com.spotifyautoplaylist.auth.EncryptedCredentialStore
 import com.spotifyautoplaylist.auth.FileAccountBindingStore
@@ -14,16 +16,37 @@ import com.spotifyautoplaylist.auth.SpotifyIdentityClient
 import com.spotifyautoplaylist.auth.SpotifyTokenClient
 import java.io.File
 import java.security.KeyStore
+import java.util.concurrent.atomic.AtomicReference
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 
 /**
  * Production auth wiring. Owned once per process by ReplayApplication.
- * [resetSteps] will cancel workers (TASK-051) and delete account-scoped Room/DataStore data (TASK-021).
+ * [AuthConfig] may be supplied later (runtime DataStore / Settings) without rebuilding the APK;
+ * [replaceConfig] updates the live provider used by login and token refresh.
+ * [resetSteps] cancel workers and delete account-scoped Room/DataStore data.
  */
-class AndroidAuth private constructor(val config: AuthConfig, context: Context, resetSteps: List<AccountResetStep>) {
+class AndroidAuth private constructor(
+    context: Context,
+    resetSteps: List<AccountResetStep>,
+    initial: AuthConfig?,
+) {
+    private val configRef = AtomicReference(initial)
+
+    /** Null until BuildConfig seed or an in-app save provides both IDs. */
+    fun configOrNull(): AuthConfig? = configRef.get()
+
+    val isConfigured: Boolean get() = configRef.get() != null
+
+    /** Replaces the live AuthConfig after a confirmed ID change (or first-time setup). */
+    fun replaceConfig(config: AuthConfig?) {
+        configRef.set(config)
+    }
+
     val manager = SpotifyAuthManager(
-        config,
+        configProvider = {
+            configRef.get() ?: throw AuthException(AuthFailure.NOT_CONFIGURED)
+        },
         EncryptedCredentialStore(
             File(context.noBackupFilesDir, "auth/credentials.bin"),
             AesGcmTokenCipher(::credentialKey),
@@ -33,15 +56,22 @@ class AndroidAuth private constructor(val config: AuthConfig, context: Context, 
         SpotifyIdentityClient(),
         resetSteps,
     )
-    val authorization = AuthorizationFlow(config)
+
+    /** Builds a fresh PKCE flow against the current Client ID. */
+    fun authorization(): AuthorizationFlow {
+        val config = configRef.get() ?: throw AuthException(AuthFailure.NOT_CONFIGURED)
+        return AuthorizationFlow(config)
+    }
 
     companion object {
         private const val KEY_ALIAS = "replay.credentials.v1"
 
-        /** Null when this build has no Spotify configuration. */
-        fun create(context: Context, resetSteps: List<AccountResetStep> = emptyList()): AndroidAuth? =
-            AuthConfig.fromBuild(BuildConfig.SPOTIFY_CLIENT_ID, BuildConfig.SPOTIFY_OWNER_USER_ID)
-                ?.let { AndroidAuth(it, context.applicationContext, resetSteps) }
+        /** Always constructs stores; [initial] may be null when no IDs are configured yet. */
+        fun create(
+            context: Context,
+            resetSteps: List<AccountResetStep> = emptyList(),
+            initial: AuthConfig? = null,
+        ): AndroidAuth = AndroidAuth(context.applicationContext, resetSteps, initial)
 
         @Synchronized
         private fun credentialKey(): SecretKey {

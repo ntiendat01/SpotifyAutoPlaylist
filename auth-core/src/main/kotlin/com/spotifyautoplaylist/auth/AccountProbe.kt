@@ -11,7 +11,7 @@ object OwnerIdentity {
     fun isValid(value: String): Boolean = value.length in 1..256 &&
         value.none { it.isWhitespace() || it.isISOControl() }
 
-    internal fun mask(value: String): String = "••••" + if (value.length > 4) value.takeLast(4) else ""
+    fun mask(value: String): String = "••••" + if (value.length > 4) value.takeLast(4) else ""
 }
 
 data class AccountProbeResult(val httpStatus: Int, val maskedUserId: String)

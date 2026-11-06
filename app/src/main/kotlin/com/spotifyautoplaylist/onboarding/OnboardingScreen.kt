@@ -31,7 +31,8 @@ import com.spotifyautoplaylist.ui.*
 @Composable
 fun OnboardingScreen(state: OnboardingUiState, model: OnboardingViewModel, onPreview: () -> Unit) {
     OnboardingContent(state, model::connect, model::cancelLogin, model::editName,
-        model::editLink, { model.create(true) }, { model.link(true) }, model::recover, model::disconnect, onPreview)
+        model::editLink, { model.create(true) }, { model.link(true) }, model::recover, model::disconnect, onPreview,
+        onSaveAuthIds = { c, o -> model.saveAuthIds(c, o, confirmed = false) })
 }
 
 @Composable
@@ -41,6 +42,7 @@ internal fun OnboardingContent(
     onName: (String) -> Unit = {}, onLinkInput: (String) -> Unit = {},
     onCreate: () -> Unit = {}, onLink: () -> Unit = {}, onRecover: () -> Unit = {},
     onDisconnect: () -> Unit = {}, onPreview: () -> Unit = {},
+    onSaveAuthIds: (String, String) -> Unit = { _, _ -> },
 ) {
     var confirm by rememberSaveable { mutableStateOf<String?>(null) }
     var showPermissions by rememberSaveable { mutableStateOf(false) }
@@ -120,7 +122,14 @@ internal fun OnboardingContent(
                     Text("Lịch sử lưu trên điện thoại. Đăng nhập trên trang Spotify; ứng dụng không nhận mật khẩu của bạn.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyMedium)
-                    if (!state.configured) CoverageBanner("Bản cài này chưa được thiết lập kết nối Spotify. Bạn có thể xem thử giao diện bên dưới.")
+                    if (!state.configured) {
+                        CoverageBanner("Nhập Client ID và Owner User ID từ Spotify Developer Dashboard (tài khoản Premium sở hữu app). Không cần cài lại APK khi đổi tài khoản.")
+                        AuthIdsForm(
+                            busy = state.busy,
+                            confirmRequired = false,
+                            onSave = onSaveAuthIds,
+                        )
+                    }
                     val waiting = state.stage == OnboardingStage.WAITING
                     if (waiting) {
                         Text("Hoàn tất đăng nhập trong trình duyệt rồi quay lại replay. Nếu đã đóng trình duyệt, chọn Hủy. Phiên chờ tối đa 3 phút.",

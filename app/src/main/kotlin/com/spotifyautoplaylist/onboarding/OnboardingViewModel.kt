@@ -57,8 +57,12 @@ class OnboardingViewModel(
     private val sync: SyncScheduleHook? = null,
     /** TASK-060: refresh home-screen widget after setup / sign-out (no tokens). */
     private val onLocalDataChanged: (() -> Unit)? = null,
+    /** TASK-061: runtime Client ID / owner ID (null in unit tests that omit it). */
+    private val authIds: RuntimeAuthIds? = null,
 ) : ViewModel() {
-    private val mutable = MutableStateFlow(OnboardingUiState(configured = auth != null))
+    private fun idsConfigured(): Boolean = authIds?.isConfigured() ?: (auth != null)
+
+    private val mutable = MutableStateFlow(OnboardingUiState(configured = idsConfigured()))
     val state = mutable.asStateFlow()
     private val browser = Channel<BrowserRequest>(Channel.RENDEZVOUS)
     val browserRequests = browser.receiveAsFlow()
@@ -67,21 +71,44 @@ class OnboardingViewModel(
     init { restore() }
 
     fun restore() = runOperation {
+        val configured = idsConfigured()
         val currentAuth = auth
-        if (currentAuth == null) mutable.value = OnboardingUiState(stage = OnboardingStage.WELCOME, configured = false)
-        else when (val restored = currentAuth.restore()) {
+        if (!configured || currentAuth == null) {
+            mutable.value = OnboardingUiState(stage = OnboardingStage.WELCOME, configured = false)
+            return@runOperation
+        }
+        when (val restored = currentAuth.restore()) {
             is AuthState.SignedIn -> showSetup()
-            is AuthState.SignedOut -> mutable.value = mutable.value.copy(stage = OnboardingStage.WELCOME,
-                error = restored.reason?.let { authMessage(AuthException(it)) })
+            is AuthState.SignedOut -> {
+                val reason = restored.reason
+                // NOT_CONFIGURED is expected before the user saves IDs; do not surface as an error.
+                val error = reason?.takeIf { it != AuthFailure.NOT_CONFIGURED }?.let { authMessage(AuthException(it)) }
+                mutable.value = mutable.value.copy(stage = OnboardingStage.WELCOME, configured = true, error = error)
+            }
             AuthState.Restoring -> error("restore incomplete")
         }
     }
 
+    /**
+     * First-time or corrected Developer App IDs. Changing existing IDs requires [confirmed]=true
+     * (Settings path); onboarding first-time setup uses confirmed=false.
+     */
+    fun saveAuthIds(clientId: String, ownerUserId: String, confirmed: Boolean = false) {
+        val gate = authIds ?: return
+        if (state.value.stage != OnboardingStage.WELCOME && state.value.configured) return
+        runOperation {
+            gate.save(clientId, ownerUserId, confirmed)
+            mutable.value = mutable.value.copy(configured = true, error = null, stage = OnboardingStage.WELCOME)
+            onLocalDataChanged?.invoke()
+        }
+    }
+
     fun connect() {
+        if (!idsConfigured()) return
         val currentAuth = auth ?: return
         if (state.value.stage != OnboardingStage.WELCOME) return
         runOperation {
-            mutable.value = mutable.value.copy(stage = OnboardingStage.WAITING, error = null)
+            mutable.value = mutable.value.copy(stage = OnboardingStage.WAITING, error = null, configured = true)
             currentAuth.login(openBrowser = { uri ->
                 val acknowledgment = CompletableDeferred<Boolean>(currentCoroutineContext()[Job])
                 browser.send(BrowserRequest(uri, acknowledgment))
@@ -127,7 +154,7 @@ class OnboardingViewModel(
 
     fun disconnect() = runOperation {
         requireNotNull(auth).signOut()
-        mutable.value = OnboardingUiState(stage = OnboardingStage.WELCOME)
+        mutable.value = OnboardingUiState(stage = OnboardingStage.WELCOME, configured = idsConfigured())
         onLocalDataChanged?.invoke()
     }
 
@@ -195,7 +222,7 @@ internal fun userMessage(failure: Exception): String = when (failure) {
 }
 
 internal fun authMessage(failure: AuthException): String = when (failure.reason) {
-    AuthFailure.NOT_CONFIGURED -> "Bản cài này chưa được thiết lập kết nối Spotify. Bạn vẫn có thể xem thử giao diện."
+    AuthFailure.NOT_CONFIGURED -> "Chưa có Client ID / Owner ID. Nhập trong màn chào hoặc Cài đặt, rồi kết nối Spotify."
     AuthFailure.PORT_IN_USE -> "Đang có phiên đăng nhập khác. Đóng phiên đó rồi thử lại."
     AuthFailure.CALLBACK_TIMEOUT -> "Đã hết thời gian chờ đăng nhập. Hãy thử lại."
     AuthFailure.CANCELLED -> "Đã hủy đăng nhập. Bạn có thể thử lại."
@@ -205,6 +232,7 @@ internal fun authMessage(failure: AuthException): String = when (failure.reason)
     AuthFailure.INSUFFICIENT_SCOPE -> "Spotify chưa cấp đủ quyền. Hãy kết nối lại và cấp các quyền được yêu cầu."
     AuthFailure.REAUTH_REQUIRED -> "Phiên Spotify đã hết hiệu lực. Hãy kết nối lại."
     AuthFailure.STORAGE -> "Không đọc được phiên đã lưu. Hãy kết nối lại; dữ liệu tài khoản vẫn được giữ riêng."
+    AuthFailure.CONFIRMATION_REQUIRED -> "Hãy xác nhận trước khi đổi Client ID hoặc Owner ID (sẽ xóa dữ liệu cục bộ)."
     AuthFailure.RESET_PENDING -> "Lần xóa dữ liệu tài khoản trước chưa hoàn tất. Cần hoàn tất khôi phục dữ liệu trước khi kết nối lại."
     AuthFailure.QUOTA_EXCEEDED -> "Đã hết hạn mức Spotify API. Tạm dừng kết nối và thử lại khi hạn mức hồi phục."
     AuthFailure.NETWORK -> "Không kết nối được Spotify. Kiểm tra mạng rồi thử lại."

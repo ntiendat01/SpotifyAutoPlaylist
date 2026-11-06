@@ -29,6 +29,13 @@ interface SettingsActions {
     suspend fun relink(input: String, confirmed: Boolean): RelinkResult
 }
 
+/** Optional TASK-061 runtime Developer App ID editor; omit in preview / unit tests that do not cover it. */
+interface AuthIdSettingsActions {
+    val maskedClientId: String
+    val maskedOwnerId: String
+    suspend fun save(clientId: String, ownerUserId: String, confirmed: Boolean)
+}
+
 object SettingsCopy {
     fun relink(r: RelinkResult): String = when (r) {
         is RelinkResult.Relinked -> "Đã liên kết playlist mới. ${r.moved} bài đang chờ sẽ được thêm ở lần đồng bộ tới (đã yêu cầu đồng bộ)."
@@ -50,7 +57,8 @@ object SettingsCopy {
 
 @Composable
 fun SettingsScreen(state: LibraryUiState, onRetry: () -> Unit, actions: SettingsActions?, version: String,
-                   onOpenPlaylist: (() -> Unit)?, onDisconnect: (() -> Unit)?) {
+                   onOpenPlaylist: (() -> Unit)?, authIds: AuthIdSettingsActions? = null,
+                   onDisconnect: (() -> Unit)? = null) {
     LibraryGate(state, onRetry) { s ->
         val scope = rememberCoroutineScope()
         val st = s.status
@@ -131,6 +139,37 @@ fun SettingsScreen(state: LibraryUiState, onRetry: () -> Unit, actions: Settings
             }
             if (expanded) SelectionContainer { Text(diag, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
             TextButton(onClick = { clipboard.setText(AnnotatedString(diag)) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Sao chép chẩn đoán") }
+        }
+
+        if (authIds != null) {
+            ReplayHeading("Developer App")
+            var idBusy by remember { mutableStateOf(false) }
+            var idError by rememberSaveable { mutableStateOf<String?>(null) }
+            var idOk by rememberSaveable { mutableStateOf<String?>(null) }
+            AuthIdsForm(
+                busy = idBusy,
+                confirmRequired = true,
+                maskedClientId = authIds.maskedClientId,
+                maskedOwnerId = authIds.maskedOwnerId,
+                onSave = { client, owner ->
+                    idBusy = true; idError = null; idOk = null
+                    scope.launch {
+                        try {
+                            authIds.save(client, owner, confirmed = true)
+                            idOk = "Đã lưu ID mới. Dữ liệu cục bộ đã xóa — hãy đăng nhập lại bằng tài khoản Premium tương ứng."
+                        } catch (e: CancellationException) { throw e }
+                        catch (e: Exception) {
+                            idError = when (e) {
+                                is com.spotifyautoplaylist.auth.AuthException ->
+                                    com.spotifyautoplaylist.onboarding.authMessage(e)
+                                else -> "Không lưu được cấu hình. Kiểm tra Client ID / Owner ID rồi thử lại."
+                            }
+                        } finally { idBusy = false }
+                    }
+                },
+            )
+            idOk?.let { Text(it, color = MaterialTheme.colorScheme.primary, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+            idError?.let { ErrorState(it) }
         }
 
         ReplayHeading("Tài khoản")

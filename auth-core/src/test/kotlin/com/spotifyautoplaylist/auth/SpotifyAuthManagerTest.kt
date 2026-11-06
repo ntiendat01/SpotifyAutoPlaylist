@@ -4,6 +4,7 @@ import java.net.URI
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -314,6 +315,49 @@ class SpotifyAuthManagerTest {
         withTimeout(2_000) { job.cancelAndJoin() }
         assertTrue(listener.closed)
         assertTrue(job.isCancelled)
+    }
+
+    @Test fun `config provider change with reset clears grant so new client can be used`() = runBlocking {
+        val configRef = AtomicReference(config)
+        val store = MemoryStore()
+        val bindings = MemoryBindings()
+        var resets = 0
+        val manager = SpotifyAuthManager(
+            { configRef.get() }, store, bindings, FakeTokens(), asAccount("acct-1"),
+            listOf(AccountResetStep { resets++ }), { clock }, Dispatchers.Unconfined,
+        )
+        manager.completeLogin(input)
+        assertTrue(manager.state.value is AuthState.SignedIn)
+
+        val other = AuthConfig.fromBuild("f".repeat(32), "owner")!!
+        // Mimic AppContainer.configureAuthIds: changing IDs without confirmation is rejected.
+        assertEquals(AuthFailure.CONFIRMATION_REQUIRED,
+            failureOf {
+                val previous = configRef.get()
+                val changing = previous.clientId != other.clientId || previous.expectedOwnerId != other.expectedOwnerId
+                if (changing) throw AuthException(AuthFailure.CONFIRMATION_REQUIRED)
+            }.reason)
+        assertEquals(0, resets)
+        assertTrue(manager.state.value is AuthState.SignedIn)
+
+        manager.resetAccount(confirmed = true)
+        configRef.set(other)
+        assertEquals(1, resets)
+        assertTrue(manager.restore() is AuthState.SignedOut)
+        assertNull(store.value)
+        assertNull(bindings.value)
+
+        val otherInput = TokenExchangeInput(other.clientId, "code", "verifier")
+        val signedIn = manager.completeLogin(otherInput)
+        assertEquals(OwnerIdentity.mask("owner"), signedIn.maskedUserId)
+        assertEquals(other.clientId, store.value!!.clientId)
+    }
+
+    @Test fun `login rejects owner mismatch against the configured runtime owner`() = runBlocking {
+        val store = MemoryStore()
+        val manager = manager(store, identity = IdentityVerifier { _, _ -> VerifiedIdentity("someone-else", "acct-x") })
+        assertEquals(AuthFailure.ACCOUNT_MISMATCH, failureOf { manager.completeLogin(input) }.reason)
+        assertNull(store.value)
     }
 
     @Test fun `port in use maps to production failure`() = runBlocking {

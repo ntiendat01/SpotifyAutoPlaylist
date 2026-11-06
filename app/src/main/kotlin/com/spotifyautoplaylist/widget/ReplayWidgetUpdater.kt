@@ -43,8 +43,9 @@ object ReplayWidgetUpdater {
     }
 
     suspend fun load(context: Context): WidgetUiState {
-        val configured = BuildConfig.SPOTIFY_CLIENT_ID.isNotBlank()
         val app = context.applicationContext as? ReplayApplication
+        val configured = app?.container?.auth?.isConfigured
+            ?: BuildConfig.SPOTIFY_CLIENT_ID.isNotBlank()
         if (app == null) {
             return WidgetUiMapper.map(
                 WidgetPersistedInput(

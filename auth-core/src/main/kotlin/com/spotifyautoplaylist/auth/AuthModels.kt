@@ -37,12 +37,15 @@ internal fun ProbeException.toAuth(): AuthException = AuthException(
     httpStatus, retryAfterSeconds,
 )
 
-/** Public Client ID plus the Developer App owner's Spotify user ID (AUTH-006), from build config. */
+/** Public Client ID plus the Developer App owner's Spotify user ID (AUTH-006). */
 class AuthConfig private constructor(val clientId: String, val expectedOwnerId: String) {
     override fun toString() = "AuthConfig(<redacted>)"
 
     companion object {
-        /** Returns null for a build without Spotify configuration (e.g. CI); rejects partial values. */
+        /**
+         * Validates a Client ID + owner pair from BuildConfig seed or a runtime DataStore override.
+         * Returns null when both are empty; rejects partial or invalid values.
+         */
         fun fromBuild(clientId: String, expectedOwnerId: String): AuthConfig? {
             if (clientId.isEmpty() && expectedOwnerId.isEmpty()) return null
             if (!SpotifyAuth.isValidClientId(clientId) || !OwnerIdentity.isValid(expectedOwnerId)) {

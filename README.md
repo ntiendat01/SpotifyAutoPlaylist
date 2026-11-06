@@ -32,7 +32,13 @@ physical-device acceptance is implied by a successful build/test.
 1. Build the APK below, or download `replay-auth-spike-debug-apk` from a successful CI run for the UI branch.
 2. Install `app-debug.apk` and open **replay.**. Choose **Xem thử giao diện** to inspect the four-tab shell
    without signing in. A persistent preview banner distinguishes it from a connected account.
-3. For real login, create the ignored repository-root `spotify.local.properties` **before building**:
+3. For real login, either:
+   - **In-app (preferred when switching accounts):** open replay. and enter the public Client ID +
+     Owner User ID on the welcome screen (or later under **Cài đặt → Developer App**). Changing IDs
+     confirms a local data wipe, then you sign in again — no APK rebuild. See
+     [docs/M7-RUNTIME-SPOTIFY-IDS.md](docs/M7-RUNTIME-SPOTIFY-IDS.md).
+   - **Build-time seed (debug convenience):** create ignored repository-root `spotify.local.properties`
+     before building:
 
    ```properties
    spotify.clientId=<public Client ID of the new Premium account's Developer App>
@@ -40,8 +46,8 @@ physical-device acceptance is implied by a successful build/test.
    ```
 
    Never enter a client secret. Owner ID is the `/user/<id>` profile value, not email/display name.
-   Configured APKs contain that personal owner identifier; keep them private. CI builds without this file
-   intentionally disable login but retain the UI preview. Do not commit this file.
+   Seeded APKs embed that personal owner identifier until overridden in-app; keep them private.
+   Do not commit this file. A new Premium account still needs its own Spotify Developer App.
 4. Register exactly `http://127.0.0.1:8765/callback` in the same Spotify Developer App. Tap **Kết nối Spotify**,
    complete browser login/consent and return to replay. Account mismatch/insufficient scope blocks setup.
 5. After verified login, confirm creating a private playlist or paste a link to one you own. If a request
