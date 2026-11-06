@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Problem status: Warning at ~9% like CoverageBanner. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_warning_tint" />
+    <corners android:radius="999dp" />
+</shape>

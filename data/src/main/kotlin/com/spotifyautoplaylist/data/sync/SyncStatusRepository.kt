@@ -35,6 +35,18 @@ class SyncStatusRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun current(account: AccountKey): SyncRunStatus = status(account).first()
 
+    /**
+     * Installation-scoped read for home-screen widgets: returns whatever pass is stored for the current
+     * owner tag, without needing an [AccountKey] (and without touching auth tokens). Empty when unbound.
+     */
+    suspend fun stored(): SyncRunStatus = dataStore.data.map { prefs ->
+        if (prefs[OWNER] == null) SyncRunStatus()
+        else SyncRunStatus(
+            prefs[OUTCOME], prefs[FINISHED], prefs[SUCCESS], prefs[BLOCKED], prefs[ERROR],
+            prefs[IMPORTED] ?: 0, prefs[QUALIFIED] ?: 0, prefs[ADDED] ?: 0,
+        )
+    }.first()
+
     suspend fun record(account: AccountKey, status: SyncRunStatus) {
         dataStore.edit { prefs ->
             prefs.clear()

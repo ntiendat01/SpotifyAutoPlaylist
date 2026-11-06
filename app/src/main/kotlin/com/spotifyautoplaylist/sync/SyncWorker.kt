@@ -12,6 +12,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.spotifyautoplaylist.widget.ReplayWidgetUpdater
 import java.util.concurrent.TimeUnit
 
 /** Supplies the process-wide orchestrator; implemented by the Application so WorkManager's default initializer stays. */
@@ -29,10 +30,19 @@ interface SyncOrchestratorProvider {
  */
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val orchestrator = (applicationContext as? SyncOrchestratorProvider)?.syncOrchestrator ?: return Result.failure()
+        val orchestrator = (applicationContext as? SyncOrchestratorProvider)?.syncOrchestrator
+        if (orchestrator == null) {
+            refreshWidget()
+            return Result.failure()
+        }
         val trigger = inputData.getString(KEY_TRIGGER)?.let { runCatching { SyncTrigger.valueOf(it) }.getOrNull() } ?: SyncTrigger.PERIODIC
         val report = orchestrator.run(trigger, inputData.getString(KEY_ACCOUNT))
+        refreshWidget()
         return toResult(report.outcome, runAttemptCount)
+    }
+
+    private suspend fun refreshWidget() {
+        runCatching { ReplayWidgetUpdater.refresh(applicationContext) }
     }
 
     companion object {

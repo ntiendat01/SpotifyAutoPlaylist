@@ -17,6 +17,10 @@ interface AccountDao {
 
     @Query("SELECT * FROM account WHERE spotify_user_id = :userId")
     suspend fun get(userId: String): AccountEntity?
+
+    /** v1 is one account per install; widget / offline readers use this without touching auth tokens. */
+    @Query("SELECT * FROM account LIMIT 1")
+    suspend fun firstOrNull(): AccountEntity?
 }
 
 @Dao
@@ -293,6 +297,10 @@ interface PlaylistDao {
     /** UI read model (TASK-050C): every outbox row of the account, any playlist and state. */
     @Query("SELECT * FROM playlist_outbox WHERE spotify_user_id = :userId")
     suspend fun outboxAll(userId: String): List<PlaylistOutboxEntity>
+
+    /** Remotely confirmed (PRESENT) rows on the current managed playlist. */
+    @Query("SELECT COUNT(*) FROM playlist_outbox WHERE spotify_user_id = :userId AND playlist_id = :playlistId AND state = 'PRESENT'")
+    suspend fun countPresent(userId: String, playlistId: String): Int
 
     /** TX-04 step: persist e.g. VERIFY_REMOTE before the network POST; network I/O never runs inside a transaction. */
     @Update suspend fun updateOutbox(item: PlaylistOutboxEntity): Int

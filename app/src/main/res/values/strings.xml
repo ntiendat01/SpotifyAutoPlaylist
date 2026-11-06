@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_app_name">replay</string>
+    <string name="widget_dot">.</string>
+    <string name="widget_name">replay. tổng quan</string>
+    <string name="widget_description">Số bài đã thêm, trạng thái đồng bộ và lối tắt mở app hoặc playlist trên Spotify.</string>
+    <string name="widget_open_app">Mở app</string>
+    <string name="widget_open_playlist">Mở trong Spotify</string>
+    <string name="widget_open_playlist_short">Mở Spotify</string>
+    <string name="widget_playlist_label">PLAYLIST SPOTIFY</string>
+    <string name="widget_loading">Đang tải…</string>
+    <string name="widget_count_placeholder">…</string>
+    <string name="widget_count_unit">bài</string>
+</resources>

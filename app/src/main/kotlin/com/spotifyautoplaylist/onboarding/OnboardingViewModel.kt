@@ -55,6 +55,8 @@ class OnboardingViewModel(
     private val auth: OnboardingAuth?,
     private val setup: PlaylistSetup?,
     private val sync: SyncScheduleHook? = null,
+    /** TASK-060: refresh home-screen widget after setup / sign-out (no tokens). */
+    private val onLocalDataChanged: (() -> Unit)? = null,
 ) : ViewModel() {
     private val mutable = MutableStateFlow(OnboardingUiState(configured = auth != null))
     val state = mutable.asStateFlow()
@@ -126,6 +128,7 @@ class OnboardingViewModel(
     fun disconnect() = runOperation {
         requireNotNull(auth).signOut()
         mutable.value = OnboardingUiState(stage = OnboardingStage.WELCOME)
+        onLocalDataChanged?.invoke()
     }
 
     private suspend fun showSetup() {
@@ -140,6 +143,7 @@ class OnboardingViewModel(
     /** Best effort: a scheduling failure never blocks onboarding. */
     private suspend fun schedule() {
         try { sync?.ensureScheduled() } catch (e: CancellationException) { throw e } catch (_: Exception) { }
+        onLocalDataChanged?.invoke()
     }
 
     private fun runOperation(action: suspend () -> Unit) {

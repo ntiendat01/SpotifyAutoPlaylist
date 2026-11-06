@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mirrors ReplayTokens (ui/ReplayTheme.kt). RemoteViews cannot read Compose colors, keep in sync. -->
+<resources>
+    <color name="widget_background">#FF090D0B</color>
+    <color name="widget_surface">#FF171F1A</color>
+    <color name="widget_elevated">#FF223029</color>
+    <color name="widget_stroke">#FF34443A</color>
+    <color name="widget_green">#FF1ED760</color>
+    <color name="widget_on_green">#FF06140C</color>
+    <color name="widget_soft">#FFA6E9B7</color>
+    <color name="widget_selected">#FF16472B</color>
+    <color name="widget_text">#FFF1FFF5</color>
+    <color name="widget_text_secondary">#FFA9B9AD</color>
+    <color name="widget_muted">#FF83958A</color>
+    <color name="widget_warning">#FFF6BD60</color>
+    <color name="widget_error">#FFFF7B80</color>
+    <!-- Hero gradient stops: surfaceVariant@70% → background@55% over surface, like ReplayCard(hero = true). -->
+    <color name="widget_hero_start">#FF1F2B24</color>
+    <color name="widget_hero_end">#FF101612</color>
+    <color name="widget_glow">#291ED760</color>
+    <color name="widget_glow_end">#001ED760</color>
+    <color name="widget_warning_tint">#17F6BD60</color>
+</resources>

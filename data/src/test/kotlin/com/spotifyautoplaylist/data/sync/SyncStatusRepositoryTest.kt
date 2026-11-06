@@ -34,4 +34,14 @@ class SyncStatusRepositoryTest {
         db.close()
         assertEquals(SyncRunStatus(), repo.current(a))
     }
+
+    @Test fun `stored returns owner row without AccountKey`() = runBlocking {
+        val repo = SyncStatusRepository.create(File(dir, "stored.preferences_pb"))
+        assertEquals(SyncRunStatus(), repo.stored())
+        val status = SyncRunStatus("SUCCESS", 20, 20, null, null, 4, 1, 2)
+        repo.record(a, status)
+        assertEquals(status, repo.stored())
+        repo.clear()
+        assertEquals(SyncRunStatus(), repo.stored())
+    }
 }

@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.spotifyautoplaylist.onboarding.*
 import com.spotifyautoplaylist.ui.*
+import com.spotifyautoplaylist.widget.ReplayWidgetUpdater
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +34,7 @@ class MainActivity : ComponentActivity() {
         val container = (application as ReplayApplication).container
         setContent {
             val model: OnboardingViewModel = viewModel(factory = viewModelFactory {
-                initializer { OnboardingViewModel(container.onboardingAuth, container.playlistSetup, container.sync?.let { s -> SyncScheduleHook { s.ensureScheduled() } }) }
+                initializer { OnboardingViewModel(container.onboardingAuth, container.playlistSetup, container.sync?.let { s -> SyncScheduleHook { s.ensureScheduled() } }, onLocalDataChanged = { ReplayWidgetUpdater.request(this@MainActivity) }) }
             })
             val state by model.state.collectAsStateWithLifecycle()
             var preview by rememberSaveable { mutableStateOf(false) }
@@ -73,7 +74,8 @@ class MainActivity : ComponentActivity() {
                         library = libraryState, onRetryLibrary = { library?.refresh() },
                         settingsActions = if (preview) null else container.sync?.let { repo -> object : com.spotifyautoplaylist.ui.SettingsActions {
                             override suspend fun syncNow() = repo.requestManualSync()
-                            override suspend fun relink(input: String, confirmed: Boolean) = repo.relinkPlaylist(input, confirmed)
+                            override suspend fun relink(input: String, confirmed: Boolean) =
+                                repo.relinkPlaylist(input, confirmed).also { ReplayWidgetUpdater.request(this@MainActivity) }
                         } },
                         onSaveRules = if (preview) null else ({ d, r -> container.saveRules(d, r).also { library?.refresh() } }),
                         preview = preview,
